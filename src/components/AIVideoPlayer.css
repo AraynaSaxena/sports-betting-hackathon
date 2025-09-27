@@ -1,0 +1,363 @@
+.ai-video-player {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* AI Control Panel */
+.ai-control-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 10px 10px 0 0;
+  border-bottom: 2px solid #0f3460;
+}
+
+.ai-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ai-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #2c3e50;
+  color: white;
+  border: 2px solid #34495e;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+  position: relative;
+}
+
+.ai-toggle:hover {
+  background: #34495e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 73, 94, 0.3);
+}
+
+.ai-toggle.active {
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  border-color: #27ae60;
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+}
+
+.ai-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid #e74c3c;
+  border-radius: 20px;
+  color: #e74c3c;
+  font-size: 12px;
+  max-width: 300px;
+}
+
+/* AI Stats */
+.ai-stats {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.ai-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+/* Video Container */
+.video-container-ai {
+  position: relative;
+  background: #000;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+/* Player Overlays */
+.ai-player-overlay {
+  border: 2px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(2px);
+}
+
+.ai-player-overlay:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.player-label {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.jersey-number {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.player-name {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.confidence {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* Player Tooltip */
+.player-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  margin-top: 10px;
+  pointer-events: none;
+}
+
+.tooltip-content {
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  min-width: 200px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.player-info strong {
+  font-size: 14px;
+  color: #3498db;
+}
+
+.player-info span {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.quick-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.stat span:first-child {
+  opacity: 0.8;
+  text-transform: capitalize;
+}
+
+.stat span:last-child {
+  font-weight: bold;
+  color: #2ecc71;
+}
+
+/* Processing Indicator */
+.processing-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.processing-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* AI Status */
+.ai-status {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-radius: 0 0 10px 10px;
+  border-top: 1px solid #e9ecef;
+}
+
+.status-active, .status-inactive {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #95a5a6;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.active {
+  background: #27ae60;
+  box-shadow: 0 0 10px rgba(39, 174, 96, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-active {
+  color: #27ae60;
+}
+
+.status-inactive {
+  color: #7f8c8d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ai-control-panel {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .ai-stats {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ai-stat {
+    flex: 1;
+    min-width: 80px;
+    justify-content: center;
+  }
+
+  .player-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .tooltip-content {
+    min-width: 250px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .ai-status {
+    background: #2c3e50;
+    border-top-color: #34495e;
+  }
+  
+  .status-inactive {
+    color: #bdc3c7;
+  }
+}
+
+/* Animation for new detections */
+@keyframes detectPlayer {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ai-player-overlay {
+  animation: detectPlayer 0.5s ease-out;
+}
+
+/* Confidence indicator colors */
+.ai-player-overlay[data-confidence="high"] {
+  border-color: #27ae60;
+}
+
+.ai-player-overlay[data-confidence="medium"] {
+  border-color: #f39c12;
+}
+
+.ai-player-overlay[data-confidence="low"] {
+  border-color: #e74c3c;
+}

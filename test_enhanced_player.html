@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Video Player Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .video-wrapper {
+            position: relative;
+        }
+        
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .player-overlay {
+            position: absolute;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+        
+        .player-overlay:hover {
+            border-color: #00ff00 !important;
+            background: rgba(0, 255, 0, 0.1) !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .jersey-label {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            border: 1px solid #00ff00;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .player-overlay:hover .jersey-label {
+            opacity: 1;
+        }
+        
+        .controls {
+            padding: 15px 20px;
+            background: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .info {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: #27ae60;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏈 Enhanced Video Player Test</h1>
+        
+        <div class="instructions">
+            <h3>🎯 Instructions:</h3>
+            <p>1. Play the video below</p>
+            <p>2. Hover your mouse over the colored areas where players should be</p>
+            <p>3. You should see green bounding boxes appear with jersey numbers</p>
+            <p>4. Click on players to see their info</p>
+        </div>
+        
+        <div class="video-container">
+            <div class="video-wrapper" id="videoWrapper">
+                <video id="gameVideo" controls>
+                    <source src="/game-video.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                
+                <!-- Player overlays will be added here by JavaScript -->
+            </div>
+            
+            <div class="controls">
+                <span>🎮 Hover over players to see jersey numbers</span>
+                <span id="playerCount">3 players detected</span>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>📊 Player Positions (for testing):</h3>
+            <p><strong>Tom Brady (#12):</strong> Red area at 15% from left, 25% from top</p>
+            <p><strong>Mike Evans (#13):</strong> Green area at 35% from left, 20% from top</p>
+            <p><strong>Rob Gronkowski (#87):</strong> Blue area at 25% from left, 30% from top</p>
+        </div>
+    </div>
+
+    <script>
+        // Player data matching your App.js
+        const PLAYER_POSITIONS = [
+            {
+                id: 'player_12',
+                name: 'Tom Brady',
+                number: 12,
+                position: 'QB',
+                team: 'Buccaneers',
+                screenPosition: { x: 15, y: 25, width: 8, height: 12 },
+                color: '#FF0000'
+            },
+            {
+                id: 'player_13',
+                name: 'Mike Evans',
+                number: 13,
+                position: 'WR',
+                team: 'Buccaneers',
+                screenPosition: { x: 35, y: 20, width: 8, height: 12 },
+                color: '#00FF00'
+            },
+            {
+                id: 'player_87',
+                name: 'Rob Gronkowski',
+                number: 87,
+                position: 'TE',
+                team: 'Buccaneers',
+                screenPosition: { x: 25, y: 30, width: 8, height: 12 },
+                color: '#0000FF'
+            }
+        ];
+
+        function createPlayerOverlays() {
+            const videoWrapper = document.getElementById('videoWrapper');
+            
+            PLAYER_POSITIONS.forEach(player => {
+                const overlay = document.createElement('div');
+                overlay.className = 'player-overlay';
+                overlay.id = player.id;
+                
+                // Set position and size
+                overlay.style.position = 'absolute';
+                overlay.style.left = `${player.screenPosition.x}%`;
+                overlay.style.top = `${player.screenPosition.y}%`;
+                overlay.style.width = `${player.screenPosition.width}%`;
+                overlay.style.height = `${player.screenPosition.height}%`;
+                overlay.style.borderColor = player.color;
+                overlay.style.zIndex = '10';
+                
+                // Create jersey label
+                const label = document.createElement('div');
+                label.className = 'jersey-label';
+                label.textContent = `#${player.number} ${player.name.split(' ')[1]}`;
+                
+                overlay.appendChild(label);
+                
+                // Add click handler
+                overlay.addEventListener('click', () => {
+                    alert(`Clicked on ${player.name} (#${player.number})\nPosition: ${player.position}\nTeam: ${player.team}`);
+                });
+                
+                // Add hover effects
+                overlay.addEventListener('mouseenter', () => {
+                    console.log(`Hovering over ${player.name}`);
+                });
+                
+                videoWrapper.appendChild(overlay);
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            createPlayerOverlays();
+            
+            const video = document.getElementById('gameVideo');
+            
+            // Update player count when video loads
+            video.addEventListener('loadedmetadata', () => {
+                console.log('Video loaded, overlays created');
+            });
+            
+            // Log video events
+            video.addEventListener('play', () => console.log('Video playing'));
+            video.addEventListener('pause', () => console.log('Video paused'));
+        });
+    </script>
+</body>
+</html>

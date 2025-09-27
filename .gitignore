@@ -35,4 +35,7 @@ public/*.mp4
 
 # Cache
 .cache/
-EOF
+EOFai_backend/venv/
+venv/
+*.pyc
+__pycache__/

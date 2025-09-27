@@ -1,35 +1,27 @@
-# Dependencies
-node_modules/
-/.pnp
-.pnp.js
+# Add Python entries to your existing .gitignore
+cat >> .gitignore << 'EOF'
 
-# Production builds
-/build
-/dist
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Python packages and models
+*.pt
+*.onnx
+*.tflite
+*.pkl
+*.joblib
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Large binary files
+*.dylib
+*.so
+public/*.mov
+public/overlay.json
 
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Large video files (optional - comment out if you want to include video)
-public/game-video.mp4
-public/*.mp4
-
-# Cache
-.cache/.venv/
+# Python virtual environment (in case it's elsewhere)
+venv/
+env/
+EOF

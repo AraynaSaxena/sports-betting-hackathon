@@ -25,18 +25,23 @@ export default function OverlayPlayerVideo() {
   const wrapRef = useRef(null);
   const [overlay, setOverlay] = useState(null);
   const [boxes, setBoxes] = useState([]);
-  const [dim, setDim] = useState({w: 1280, h: 720});
+  const [dim, setDim] = useState({w: 800, h: 450}); // Reduced from 1280x720
   const [tip, setTip] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [detectionMethod, setDetectionMethod] = useState('tensorflow'); // 'tensorflow', 'motion', or 'static'
+  const [videoScale, setVideoScale] = useState(0.55); // Video scaling factor - increased default
 
   useEffect(() => {
     fetch("overlay.json").then(r=>r.json()).then(data => {
       setOverlay(data);
-      setDim({w: data.video.width, h: data.video.height});
+      // Scale video based on videoScale state
+      setDim({
+        w: Math.round(data.video.width * videoScale), 
+        h: Math.round(data.video.height * videoScale)
+      });
     });
-  }, []);
+  }, [videoScale]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -104,21 +109,34 @@ export default function OverlayPlayerVideo() {
   const styleWrap = {
     position: "relative",
     width: dim.w, height: dim.h,
+    maxWidth: '100%', // Prevent overflow
     borderRadius: 16, overflow: "hidden",
     boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto"
+    fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto",
+    margin: '0 auto', // Center the video
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000'
   };
-  const boxStyle = (b) => ({
-    position: "absolute",
-    left: b.x, top: b.y, width: b.w, height: b.h,
-    border: "3px solid rgba(0, 200, 255, 0.95)",
-    borderRadius: 8, cursor: "pointer",
-    boxShadow: "0 0 15px rgba(0,200,255,0.6), 0 0 30px rgba(0,200,255,0.3)",
-    zIndex: 20,
-    transition: "all 0.1s ease-out", // Smooth movement
-    backgroundColor: "rgba(0, 200, 255, 0.1)",
-    backdropFilter: "blur(2px)"
-  });
+  const boxStyle = (b) => {
+    // Scale box positions to match scaled video
+    const scale = overlay ? (dim.w / overlay.video.width) : 0.6;
+    return {
+      position: "absolute",
+      left: Math.round(b.x * scale), 
+      top: Math.round(b.y * scale), 
+      width: Math.round(b.w * scale), 
+      height: Math.round(b.h * scale),
+      border: "3px solid rgba(0, 200, 255, 0.95)",
+      borderRadius: 8, cursor: "pointer",
+      boxShadow: "0 0 15px rgba(0,200,255,0.6), 0 0 30px rgba(0,200,255,0.3)",
+      zIndex: 20,
+      transition: "all 0.1s ease-out", // Smooth movement
+      backgroundColor: "rgba(0, 200, 255, 0.1)",
+      backdropFilter: "blur(2px)"
+    };
+  };
 
   const onEnter = (e, b) => {
     const rect = wrapRef.current.getBoundingClientRect();
@@ -143,13 +161,77 @@ export default function OverlayPlayerVideo() {
 
   return (
     <div>
+      <style>{`
+        .centered-video {
+          position: relative;
+        }
+        .centered-video video {
+          display: block;
+          margin: 0 auto;
+        }
+        .centered-video video::-webkit-media-controls-panel {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      `}</style>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', flexWrap: 'wrap', gap: '10px'}}>
         <h2 style={{fontSize:18, margin:0}}>NFL Player Overlay</h2>
         
         {/* Detection Method Toggle */}
-        <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
-          <span style={{fontSize: 12, color: '#ccc'}}>Detection:</span>
-          <button 
+        <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+          {/* Size Controls */}
+          <div style={{display: 'flex', gap: '3px', alignItems: 'center'}}>
+            <span style={{fontSize: 11, color: '#ccc'}}>Size:</span>
+            <button 
+              onClick={() => setVideoScale(0.35)}
+              style={{
+                padding: '3px 5px', fontSize: 9, borderRadius: 3, border: 'none',
+                background: videoScale === 0.35 ? '#00ff88' : '#333',
+                color: videoScale === 0.35 ? '#000' : '#fff',
+                cursor: 'pointer'
+              }}
+            >
+              S
+            </button>
+            <button 
+              onClick={() => setVideoScale(0.55)}
+              style={{
+                padding: '3px 5px', fontSize: 9, borderRadius: 3, border: 'none',
+                background: videoScale === 0.55 ? '#00ff88' : '#333',
+                color: videoScale === 0.55 ? '#000' : '#fff',
+                cursor: 'pointer'
+              }}
+            >
+              M
+            </button>
+            <button 
+              onClick={() => setVideoScale(0.7)}
+              style={{
+                padding: '3px 5px', fontSize: 9, borderRadius: 3, border: 'none',
+                background: videoScale === 0.7 ? '#00ff88' : '#333',
+                color: videoScale === 0.7 ? '#000' : '#fff',
+                cursor: 'pointer'
+              }}
+            >
+              L
+            </button>
+            <button 
+              onClick={() => setVideoScale(0.85)}
+              style={{
+                padding: '3px 5px', fontSize: 9, borderRadius: 3, border: 'none',
+                background: videoScale === 0.85 ? '#00ff88' : '#333',
+                color: videoScale === 0.85 ? '#000' : '#fff',
+                cursor: 'pointer'
+              }}
+            >
+              XL
+            </button>
+          </div>
+          
+          <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
+            <span style={{fontSize: 12, color: '#ccc'}}>Detection:</span>
+            <button 
             onClick={() => setDetectionMethod('tensorflow')}
             style={{
               padding: '4px 8px', fontSize: 11, borderRadius: 4, border: 'none',
@@ -182,14 +264,29 @@ export default function OverlayPlayerVideo() {
           >
             📄 Static
           </button>
+          </div>
         </div>
         
         <div style={{fontSize:12, color:'#00ff88', fontFamily:'monospace'}}>
           Time: {currentTime.toFixed(2)}s | Frame: {currentFrame}/{overlay?.frames?.length || 0}
         </div>
       </div>
-      <div ref={wrapRef} style={styleWrap} onMouseMove={onMove}>
-        <video ref={videoRef} src="game-video.mp4" width={dim.w} height={dim.h} controls style={{display:"block"}}/>
+      <div ref={wrapRef} className="centered-video" style={styleWrap} onMouseMove={onMove}>
+        <video 
+          ref={videoRef} 
+          src="game-video.mp4" 
+          width={dim.w} 
+          height={dim.h} 
+          controls 
+          style={{
+            display: "block",
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            margin: "0 auto",
+            position: "relative"
+          }}
+        />
         {/* Conditional Detection Rendering */}
         {detectionMethod === 'static' && (
           /* Static boxes from JSON */

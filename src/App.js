@@ -258,8 +258,17 @@ function SportsBettingApp() {
       <div className="video-container">
         {useRealVideo ? (
           /* Real Video with AI-Generated Overlays */
-          <div style={{ background: '#1a1a1a', borderRadius: '15px', padding: '20px' }}>
-            <h3 style={{ color: '#00ff88', marginBottom: '15px', textAlign: 'center' }}>
+          <div style={{ 
+            background: '#1a1a1a', 
+            borderRadius: '15px', 
+            padding: '12px',
+            maxWidth: '900px',
+            margin: '0 auto',
+            width: '98%',
+            boxSizing: 'border-box',
+            overflow: 'hidden'
+          }}>
+            <h3 style={{ color: '#00ff88', marginBottom: '10px', textAlign: 'center', fontSize: '16px' }}>
               🎥 Real NFL Video with AI Player Detection
             </h3>
             <OverlayPlayerVideo />

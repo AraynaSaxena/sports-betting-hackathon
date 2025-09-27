@@ -690,3 +690,393 @@
     margin: 20px 15px;
   }
 }
+
+/* Fix for Login/Signup component styling */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.auth-card {
+  background: rgba(26, 26, 26, 0.95);
+  border-radius: 20px;
+  border: 1px solid #333;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-header h2 {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.auth-header p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  color: white !important;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.form-group input {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid #444 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  color: white !important;
+  font-size: 16px !important;
+}
+
+.form-group input:focus {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border-color: #00ff88 !important;
+  outline: none !important;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3) !important;
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.error-message {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  color: #ff6b6b;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.auth-button {
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-button.primary {
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.auth-button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 255, 136, 0.5);
+}
+
+.auth-button:disabled {
+  background: #666;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #333;
+}
+
+.auth-footer p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #00ff88;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: #00cc66;
+}
+
+.responsible-gambling-notice {
+  margin-top: 20px;
+  text-align: center;
+  padding: 15px;
+  background: rgba(255, 170, 0, 0.1);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+  border-radius: 8px;
+}
+
+.responsible-gambling-notice small {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.4;
+}
+/* Fix checkbox labels and verification text */
+.form-group label,
+.checkbox-group label,
+.verification-text,
+input[type="checkbox"] + label,
+label[for*="verify"],
+label[for*="age"],
+label[for*="terms"] {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+/* Fix any text near checkboxes */
+.checkbox-group,
+.verification-group,
+.terms-group {
+  color: white !important;
+}
+
+.checkbox-group * {
+  color: white !important;
+}
+
+/* Ensure all form text is visible */
+.auth-form *,
+.signup-form *,
+.form-section * {
+  color: inherit !important;
+}
+
+/* Force checkbox labels specifically */
+input[type="checkbox"] {
+  margin-right: 8px !important;
+}
+
+/* Any remaining black text fix */
+.auth-container label,
+.auth-container span,
+.auth-container p,
+.auth-container small {
+  color: white !important;
+}
+
+/* Improved Responsible Gambling Limits Section */
+.spending-limits-section {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.08), rgba(0, 102, 255, 0.08));
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 16px;
+  padding: 25px;
+  margin: 25px 0;
+}
+
+.spending-limits-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.spending-limits-header h3 {
+  color: #00ff88 !important;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.spending-limits-header p {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Why Set Limits Section */
+.why-limits-section {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.why-limits-title {
+  color: #00ff88 !important;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.why-limits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.why-limits-list li {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.why-limits-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #00ff88;
+  font-weight: bold;
+}
+
+/* Spending Limits Grid */
+.limits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.limit-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.limit-label {
+  color: white !important;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.limit-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.limit-input-wrapper span {
+  position: absolute;
+  left: 12px;
+  color: #00ff88;
+  font-weight: 700;
+  font-size: 18px;
+  z-index: 1;
+}
+
+.limit-input {
+  width: 100% !important;
+  padding: 12px 12px 12px 35px !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid #444 !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+.limit-input:focus {
+  border-color: #00ff88 !important;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3) !important;
+}
+
+.limit-description {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 5px;
+}
+
+/* Acknowledgment Section */
+.acknowledgment-section {
+  background: rgba(255, 170, 0, 0.1);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.acknowledgment-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.acknowledgment-checkbox input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: #00ff88;
+}
+
+.acknowledgment-text {
+  color: white !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.acknowledgment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  padding-left: 30px;
+}
+
+.acknowledgment-list li {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  position: relative;
+  padding-left: 15px;
+}
+
+.acknowledgment-list li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .limits-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .spending-limits-section {
+    padding: 20px;
+    margin: 20px 0;
+  }
+}

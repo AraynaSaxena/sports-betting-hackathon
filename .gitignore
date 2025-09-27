@@ -1,0 +1,38 @@
+# Create .gitignore to exclude large files and sensitive data
+cat > .gitignore << 'EOF'
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production builds
+/build
+/dist
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large video files (optional - comment out if you want to include video)
+public/game-video.mp4
+public/*.mp4
+
+# Cache
+.cache/
+EOF

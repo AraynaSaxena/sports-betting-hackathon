@@ -25,3 +25,23 @@ public/overlay.json
 venv/
 env/
 EOF
+# Python virtual environment
+.venv/
+venv/
+
+# Node.js
+node_modules/
+
+# React build output  
+build/
+
+# Large video files
+public/*.mp4
+public/*.mov
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Requirements (add this so others can install dependencies)
+# requirements.txt should be tracked

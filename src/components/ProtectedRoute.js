@@ -1,6 +1,6 @@
 // src/components/ProtectedRoute.js
 import { useAuth } from '../context/AuthContext';
-import AuthPage from '../pages/AuthPage';
+import AuthPage from './AuthPage'; // Fixed import path
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();

@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Play, Pause, TrendingUp, DollarSign, Eye, MessageCircle } from 'lucide-react';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 // Your Gemini API key
@@ -59,7 +61,7 @@ const QUESTION_TEMPLATES = [
   "Will there be a turnover in the next 3 plays?"
 ];
 
-function App() {
+function AppContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
@@ -482,6 +484,16 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <AppContent />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
 

@@ -2,10 +2,11 @@ import React, { useState, useRef } from 'react';
 import { Play, Pause, TrendingUp, DollarSign, Eye, MessageCircle } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import OverlayPlayerVideo from './components/OverlayPlayerVideo';
 import './App.css';
 
 // Your Gemini API key
-const GEMINI_API_KEY = 'AIzaSyC3r1DQPqNfU28LKvbRr2Grbwf7oAlxrXw';
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
 // Player data from your preprocessing
 const PLAYER_POSITIONS = [
@@ -74,6 +75,7 @@ function SportsBettingApp() {
   const [betAmount, setBetAmount] = useState('');
   const [selectedBet, setSelectedBet] = useState(null);
   const [financialWarning, setFinancialWarning] = useState(null);
+  const [useRealVideo, setUseRealVideo] = useState(true);
 
   const videoRef = useRef(null);
 
@@ -204,6 +206,12 @@ function SportsBettingApp() {
         <h1>🏈 SportsBet AI</h1>
         <div className="header-controls">
           <button
+            className={`cv-toggle ${useRealVideo ? 'active' : ''}`}
+            onClick={() => setUseRealVideo(!useRealVideo)}
+          >
+            🎥 {useRealVideo ? 'Real Video' : 'Demo Mode'}
+          </button>
+          <button
             className={`cv-toggle ${cvEnabled ? 'active' : ''}`}
             onClick={() => setCvEnabled(!cvEnabled)}
           >
@@ -248,54 +256,101 @@ function SportsBettingApp() {
 
       {/* Video Container */}
       <div className="video-container">
-        <div className="video-wrapper" style={{ position: 'relative' }}>
-          <video
-            ref={videoRef}
-            width="100%"
-            height="400px"
-            controls
-            style={{ borderRadius: '10px', backgroundColor: '#000' }}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          >
-            <source src="/game-video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-
-          {/* Player overlays positioned over the video */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            pointerEvents: 'none' // Allow video controls to work
-          }}>
-            {PLAYER_POSITIONS.map(player => (
-              <button
-                key={player.id}
-                className="player-overlay"
-                style={{
-                  position: 'absolute',
-                  left: `${player.screenPosition.x}%`,
-                  top: `${player.screenPosition.y}%`,
-                  width: `${player.screenPosition.width}%`,
-                  height: `${player.screenPosition.height}%`,
-                  backgroundColor: player.color + '40',
-                  borderColor: player.color,
-                  pointerEvents: 'auto', // Re-enable clicks for player buttons
-                  zIndex: 10
-                }}
-                onClick={() => handlePlayerClick(player)}
-              >
-                <div className="player-label">
-                  <div>#{player.number}</div>
-                  <div>{player.name.split(' ')[1]}</div>
-                </div>
-              </button>
-            ))}
+        {useRealVideo ? (
+          /* Real Video with AI-Generated Overlays */
+          <div style={{ background: '#1a1a1a', borderRadius: '15px', padding: '20px' }}>
+            <h3 style={{ color: '#00ff88', marginBottom: '15px', textAlign: 'center' }}>
+              🎥 Real NFL Video with AI Player Detection
+            </h3>
+            <OverlayPlayerVideo />
           </div>
-        </div>
+        ) : (
+          /* Demo Mode - Simulated Field */
+          <div className="video-wrapper" style={{ position: 'relative' }}>
+            <div style={{ 
+              width: '100%', 
+              height: '400px', 
+              borderRadius: '10px', 
+              backgroundColor: '#000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              {/* Simulated Football Field */}
+              <div className="simulated-field">
+                {/* Field markings */}
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                }}>
+                  🏈 LIVE GAME SIMULATION
+                </div>
+                
+                {/* Yard lines */}
+                {[20, 40, 60, 80].map(yard => (
+                  <div key={yard} style={{
+                    position: 'absolute',
+                    left: `${yard}%`,
+                    top: '10%',
+                    bottom: '10%',
+                    width: '2px',
+                    backgroundColor: 'rgba(255,255,255,0.3)'
+                  }} />
+                ))}
+              </div>
+              
+              <div style={{ textAlign: 'center', color: '#ccc' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#00ff88' }}>🎥 Demo Mode</h3>
+                <p style={{ margin: 0, fontSize: '14px' }}>
+                  Click "Real Video" button above to see AI player detection!<br/>
+                  <small>Or click on demo players below</small>
+                </p>
+              </div>
+            </div>
+
+            {/* Player overlays positioned over the demo field */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              pointerEvents: 'none'
+            }}>
+              {PLAYER_POSITIONS.map(player => (
+                <button
+                  key={player.id}
+                  className="player-overlay"
+                  style={{
+                    position: 'absolute',
+                    left: `${player.screenPosition.x}%`,
+                    top: `${player.screenPosition.y}%`,
+                    width: `${player.screenPosition.width}%`,
+                    height: `${player.screenPosition.height}%`,
+                    backgroundColor: player.color + '40',
+                    borderColor: player.color,
+                    pointerEvents: 'auto',
+                    zIndex: 10
+                  }}
+                  onClick={() => handlePlayerClick(player)}
+                >
+                  <div className="player-label">
+                    <div>#{player.number}</div>
+                    <div>{player.name.split(' ')[1]}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Video Controls */}
         <div className="video-controls">

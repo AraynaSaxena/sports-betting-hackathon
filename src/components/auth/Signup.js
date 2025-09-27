@@ -86,128 +86,154 @@ const Signup = ({ onSwitchToLogin }) => {
     return (
       <div className="auth-container">
         <div className="auth-card">
-          <div className="auth-header">
-            <h2>Set Your Spending Limits</h2>
-            <p>Protect yourself with responsible spending limits</p>
-          </div>
-
-          <form onSubmit={handleFinalSubmit} className="auth-form">
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-
-            <div className="responsible-gambling-info">
-              <h4>Why set limits?</h4>
-              <ul>
-                <li>Prevents spending more than you can afford</li>
-                <li>Helps maintain control over your betting</li>
-                <li>Can be adjusted later (with a 24-hour cooling period)</li>
-                <li>Hard limits - system will prevent bets that exceed them</li>
-              </ul>
+          <div className="spending-limits-section">
+            <div className="spending-limits-header">
+              <h3>Set Your Spending Limits</h3>
+              <p>Protect yourself with responsible spending limits</p>
             </div>
 
-            <div className="limits-grid">
-              <div className="form-group">
-                <label htmlFor="dailyLimit">Daily Spending Limit</label>
-                <div className="input-with-prefix">
-                  <span>$</span>
+            <form onSubmit={handleFinalSubmit} className="auth-form">
+              {error && (
+                <div className="error-message">
+                  {error}
+                </div>
+              )}
+
+              <div className="why-limits-section">
+                <div className="why-limits-title">
+                  Why set limits?
+                </div>
+                <ul className="why-limits-list">
+                  <li>Prevents spending more than you can afford</li>
+                  <li>Helps maintain control over your betting</li>
+                  <li>Can be adjusted later (with a 24-hour cooling period)</li>
+                  <li>Hard limits - system will prevent bets that exceed them</li>
+                </ul>
+              </div>
+
+              <div className="limits-grid">
+                <div className="limit-input-group">
+                  <label htmlFor="dailyLimit" className="limit-label">Daily Spending Limit</label>
+                  <div className="limit-input-wrapper">
+                    <span>$</span>
+                    <input
+                      type="number"
+                      id="dailyLimit"
+                      name="dailyLimit"
+                      className="limit-input"
+                      value={formData.dailyLimit}
+                      onChange={handleChange}
+                      min="1"
+                      max="1000"
+                      required
+                    />
+                  </div>
+                  <div className="limit-description">Maximum you can spend in a single day</div>
+                </div>
+
+                <div className="limit-input-group">
+                  <label htmlFor="weeklyLimit" className="limit-label">Weekly Spending Limit</label>
+                  <div className="limit-input-wrapper">
+                    <span>$</span>
+                    <input
+                      type="number"
+                      id="weeklyLimit"
+                      name="weeklyLimit"
+                      className="limit-input"
+                      value={formData.weeklyLimit}
+                      onChange={handleChange}
+                      min={formData.dailyLimit}
+                      max="5000"
+                      required
+                    />
+                  </div>
+                  <div className="limit-description">Maximum you can spend in a week</div>
+                </div>
+
+                <div className="limit-input-group">
+                  <label htmlFor="monthlyLimit" className="limit-label">Monthly Spending Limit</label>
+                  <div className="limit-input-wrapper">
+                    <span>$</span>
+                    <input
+                      type="number"
+                      id="monthlyLimit"
+                      name="monthlyLimit"
+                      className="limit-input"
+                      value={formData.monthlyLimit}
+                      onChange={handleChange}
+                      min={formData.weeklyLimit}
+                      max="20000"
+                      required
+                    />
+                  </div>
+                  <div className="limit-description">Maximum you can spend in a month</div>
+                </div>
+              </div>
+
+              <div className="acknowledgment-section">
+                <div className="acknowledgment-checkbox">
                   <input
-                    type="number"
-                    id="dailyLimit"
-                    name="dailyLimit"
-                    value={formData.dailyLimit}
+                    type="checkbox"
+                    id="acceptedTerms"
+                    name="acceptedTerms"
+                    checked={formData.acceptedTerms}
                     onChange={handleChange}
-                    min="1"
-                    max="1000"
                     required
                   />
+                  <div className="acknowledgment-text">
+                    I acknowledge that I understand responsible gambling practices and agree to:
+                    <ul className="acknowledgment-list">
+                      <li>Only bet money I can afford to lose</li>
+                      <li>Respect the spending limits I've set</li>
+                      <li>Seek help if gambling becomes a problem</li>
+                      <li>Use cool-off periods if needed</li>
+                    </ul>
+                  </div>
                 </div>
-                <small>Maximum you can spend in a single day</small>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="weeklyLimit">Weekly Spending Limit</label>
-                <div className="input-with-prefix">
-                  <span>$</span>
-                  <input
-                    type="number"
-                    id="weeklyLimit"
-                    name="weeklyLimit"
-                    value={formData.weeklyLimit}
-                    onChange={handleChange}
-                    min={formData.dailyLimit}
-                    max="5000"
-                    required
-                  />
-                </div>
-                <small>Maximum you can spend in a week</small>
+              <div className="form-actions" style={{ display: 'flex', gap: '15px', marginTop: '25px' }}>
+                <button
+                  type="button"
+                  className="auth-button secondary"
+                  onClick={() => setShowLimitsStep(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: 'white',
+                    border: '1px solid #444'
+                  }}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="auth-button primary"
+                  disabled={loading}
+                  style={{ flex: 1 }}
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
               </div>
+            </form>
 
-              <div className="form-group">
-                <label htmlFor="monthlyLimit">Monthly Spending Limit</label>
-                <div className="input-with-prefix">
-                  <span>$</span>
-                  <input
-                    type="number"
-                    id="monthlyLimit"
-                    name="monthlyLimit"
-                    value={formData.monthlyLimit}
-                    onChange={handleChange}
-                    min={formData.weeklyLimit}
-                    max="20000"
-                    required
-                  />
-                </div>
-                <small>Maximum you can spend in a month</small>
-              </div>
+            <div className="help-resources" style={{
+              marginTop: '25px',
+              padding: '20px',
+              background: 'rgba(255, 170, 0, 0.1)',
+              border: '1px solid rgba(255, 170, 0, 0.3)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <p style={{ color: 'white', fontWeight: '600', margin: '0 0 10px 0' }}>
+                Need help with gambling problems?
+              </p>
+              <p style={{ color: 'rgba(255, 255, 255, 0.8)', margin: '0 0 5px 0', fontSize: '14px' }}>
+                National Problem Gambling Helpline: 1-800-522-4700
+              </p>
+              <p style={{ color: 'rgba(255, 255, 255, 0.8)', margin: '0', fontSize: '14px' }}>
+                Or visit: ncpgambling.org
+              </p>
             </div>
-
-            <div className="terms-section">
-              <div className="checkbox-group">
-                <input
-                  type="checkbox"
-                  id="acceptedTerms"
-                  name="acceptedTerms"
-                  checked={formData.acceptedTerms}
-                  onChange={handleChange}
-                  required
-                />
-                <label htmlFor="acceptedTerms">
-                  I acknowledge that I understand responsible gambling practices and agree to:
-                  <ul>
-                    <li>Only bet money I can afford to lose</li>
-                    <li>Respect the spending limits I've set</li>
-                    <li>Seek help if gambling becomes a problem</li>
-                    <li>Use cool-off periods if needed</li>
-                  </ul>
-                </label>
-              </div>
-            </div>
-
-            <div className="form-actions">
-              <button
-                type="button"
-                className="auth-button secondary"
-                onClick={() => setShowLimitsStep(false)}
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                className="auth-button primary"
-                disabled={loading}
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </button>
-            </div>
-          </form>
-
-          <div className="help-resources">
-            <p><strong>Need help with gambling problems?</strong></p>
-            <p>National Problem Gambling Helpline: 1-800-522-4700</p>
-            <p>Or visit: ncpgambling.org</p>
           </div>
         </div>
       </div>
@@ -282,7 +308,13 @@ const Signup = ({ onSwitchToLogin }) => {
             />
           </div>
 
-          <div className="age-verification">
+          <div className="age-verification" style={{
+            background: 'rgba(0, 255, 136, 0.05)',
+            border: '1px solid rgba(0, 255, 136, 0.2)',
+            borderRadius: '12px',
+            padding: '20px',
+            margin: '20px 0'
+          }}>
             <div className="form-group">
               <label htmlFor="age">Age</label>
               <input
@@ -298,7 +330,7 @@ const Signup = ({ onSwitchToLogin }) => {
               />
             </div>
 
-            <div className="checkbox-group">
+            <div className="checkbox-group" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginTop: '15px' }}>
               <input
                 type="checkbox"
                 id="ageVerified"
@@ -306,8 +338,14 @@ const Signup = ({ onSwitchToLogin }) => {
                 checked={formData.ageVerified}
                 onChange={handleChange}
                 required
+                style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#00ff88' }}
               />
-              <label htmlFor="ageVerified">
+              <label htmlFor="ageVerified" style={{
+                color: 'white',
+                fontSize: '14px',
+                lineHeight: '1.4',
+                fontWeight: '500'
+              }}>
                 I verify that I am 18 years of age or older and legally allowed to participate in online betting in my jurisdiction
               </label>
             </div>

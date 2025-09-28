@@ -1,0 +1,18 @@
+/Users/kushagraaitha/Documents/hackgt/sports-betting-hackathon/ai_backend/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+🤖 Initializing Player Detector...
+✅ YOLO model loaded successfully
+✅ OCR reader initialized successfully
+📊 Initializing NFL Stats Service...
+Downcasting floats.
+✅ NFL data loaded successfully
+🚀 AI Backend Starting...
+📊 Player Detection: Ready
+🔢 Jersey OCR: Ready
+📈 Stats Service: Ready
+🌐 WebSocket Server: Running on ws://localhost:8765
+ * Serving Flask app 'app'
+ * Debug mode: on
+Address already in use
+Port 5000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+On macOS, try disabling the 'AirPlay Receiver' service from System Preferences -> General -> AirDrop & Handoff.

@@ -2,7 +2,7 @@
 async function testGeminiAPI() {
   console.log('🧪 Testing Gemini API with your key...');
   
-  const apiKey = 'AIzaSyATdosvjOpU7TOKph909dowzxsQetqGs70';
+  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
   
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {

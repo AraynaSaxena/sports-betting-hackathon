@@ -624,8 +624,8 @@ import { useCedarChat } from "./community/useCedarChat";
 // Single-user demo identity (hardcoded on purpose for hackathon demo)
 const user = { id: "demo-user-1", name: "You" };
 
-// Your Gemini API key (left exactly as-is)
-const GEMINI_API_KEY = 'YOUR_API_KEY';
+// Your Gemini API key (from environment variables)
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
 // Player data from your preprocessing
 const PLAYER_POSITIONS = [

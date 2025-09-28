@@ -10,7 +10,10 @@ import {
   Heart,
   ThumbsUp,
   Fire,
-  Star
+  Star,
+  Send,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import styled from '@emotion/styled';
 import { useCedarChat } from '../community/useCedarChat';
@@ -87,7 +90,7 @@ const ChatPanel = styled(motion.div)`
   right: 0;
   margin-bottom: 12px;
   width: min(420px, 95vw);
-  max-height: 60vh;
+  max-height: 70vh;
   background: linear-gradient(135deg, 
     rgba(16,18,27,.95), 
     rgba(32,35,48,.95),
@@ -98,6 +101,8 @@ const ChatPanel = styled(motion.div)`
   background-clip: padding-box;
   border-radius: 24px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-shadow: 
     0 25px 80px rgba(0,0,0,.6),
     0 0 0 1px rgba(255,255,255,.1),
@@ -350,6 +355,48 @@ const EmojiButton = styled(motion.button)`
   }
 `;
 
+const InputContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  background: rgba(0,0,0,.1);
+  flex-shrink: 0;
+`;
+
+const Input = styled.input`
+  flex: 1;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.18);
+  padding: 12px 16px;
+  border-radius: 12px;
+  outline: none;
+  font-size: 14px;
+  
+  &::placeholder {
+    color: rgba(255,255,255,.5);
+  }
+  
+  &:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,.2);
+  }
+`;
+
+const SendButton = styled(motion.button)`
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
 // Sports memes and emojis
 const SPORTS_EMOJIS = ['🏈', '⚽', '🏀', '⚾', '🏒', '🎯', '🏆', '🥇', '🔥', '💪', '🎉', '💰', '📈', '📊', '🎮', '🚀', '💎', '⭐', '❤️', '👍', '👏', '🤝', '🎊', '🏅', '🦅', '⚡', '🏃‍♂️', '🎪', '🎭', '🍺', '🌭', '🥤'];
 
@@ -390,13 +437,102 @@ export default function CommunityChat({ roomId = "sports-community-1" }) {
   const [open, setOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activePoll, setActivePoll] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+  const [inputText, setInputText] = useState('');
   const listRef = useRef(null);
+  const sendMessageRef = useRef(null);
   
   // Use real Cedar OS chat hook
   const { messages, presence, send, connected, error } = useCedarChat({ 
     roomId, 
     user: { id: "user_" + Math.random().toString(36).substr(2, 9), name: "SportsFan" }
   });
+  
+  const sendMessage = (text) => {
+    console.log('sendMessage called with:', text);
+    if (!text.trim()) return;
+    console.log('Sending message via Cedar OS:', text.trim());
+    console.log('Cedar OS connected status:', connected);
+    console.log('Cedar OS error:', error);
+    
+    try {
+      send(text.trim());
+      console.log('Message sent successfully');
+      setInputText(''); // Clear input after sending
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted with inputText:', inputText);
+    if (inputText.trim()) {
+      sendMessage(inputText);
+    } else {
+      console.log('No text to send');
+    }
+  };
+  
+  // Update sendMessage ref when function changes
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [send]);
+  
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US';
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('Voice input received:', transcript);
+        console.log('Setting inputText to:', transcript);
+        // Set the voice input in the text field instead of sending directly
+        setInputText(transcript);
+        console.log('inputText state updated');
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+      
+      setRecognition(recognitionInstance);
+    }
+  }, []);
+
+  const startListening = () => {
+    console.log('Starting voice recognition...');
+    console.log('Cedar OS connected:', connected);
+    console.log('Recognition available:', !!recognition);
+    console.log('Currently listening:', isListening);
+    if (recognition && !isListening) {
+      setIsListening(true);
+      recognition.start();
+    } else {
+      console.log('Recognition not available or already listening');
+    }
+  };
+
+  const stopListening = () => {
+    console.log('Stopping voice recognition...');
+    if (recognition && isListening) {
+      recognition.stop();
+      setIsListening(false);
+    }
+  };
   
   // Add welcome message if no messages exist
   const [hasWelcomeMessage, setHasWelcomeMessage] = useState(false);
@@ -473,11 +609,6 @@ export default function CommunityChat({ roomId = "sports-community-1" }) {
     }
   }, [messages]);
 
-  const sendMessage = (text) => {
-    if (!text.trim()) return;
-    send(text.trim());
-  };
-
   const addReaction = (messageId, emoji) => {
     // Note: In real Cedar OS implementation, reactions would be handled server-side
     // For now, we'll just log the reaction attempt
@@ -497,7 +628,7 @@ export default function CommunityChat({ roomId = "sports-community-1" }) {
     
     const question = pollQuestions[Math.floor(Math.random() * pollQuestions.length)];
     const options = [
-      "Team A", "Team B", "It's a toss-up", "I don't watch sports"
+      "Philadelphia Eagles", "Dallas Cowboys", "It's a toss-up", "I don't watch sports"
     ];
     
     setActivePoll({
@@ -614,9 +745,10 @@ export default function CommunityChat({ roomId = "sports-community-1" }) {
               ref={listRef} 
               style={{ 
                 padding: "16px 20px", 
-                maxHeight: "50vh", 
+                flex: 1,
                 overflow: "auto",
-                background: "linear-gradient(180deg, rgba(0,0,0,.1), transparent)"
+                background: "linear-gradient(180deg, rgba(0,0,0,.1), transparent)",
+                minHeight: 0
               }}
             >
               {messages.map((msg, index) => (
@@ -788,63 +920,57 @@ export default function CommunityChat({ roomId = "sports-community-1" }) {
 
             {/* Input */}
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = e.target.text.value;
-                if (input.trim()) {
-                  sendMessage(input);
-                  e.target.text.value = '';
-                }
-              }}
-              style={{ 
-                display: "flex", 
-                gap: 8, 
-                padding: "16px 20px", 
-                borderTop: "1px solid rgba(255,255,255,.1)",
-                background: "rgba(0,0,0,.1)"
-              }}
+              onSubmit={handleFormSubmit}
             >
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                style={{ 
-                  background: "rgba(255,255,255,.1)", 
-                  border: "1px solid rgba(255,255,255,.2)", 
-                  color: "#fff", 
-                  padding: "10px 12px", 
-                  borderRadius: "12px",
-                  cursor: "pointer"
-                }}
-              >
-                <Smile size={16} />
-              </button>
-              <input
-                name="text"
-                placeholder="Share your thoughts, memes, or predictions..."
-                style={{ 
-                  flex: 1, 
-                  background: "rgba(255,255,255,.06)", 
-                  color: "#fff", 
-                  border: "1px solid rgba(255,255,255,.18)", 
-                  padding: "12px 16px", 
-                  borderRadius: "12px",
-                  outline: "none"
-                }}
-              />
-              <button 
-                type="submit" 
-                style={{ 
-                  background: "linear-gradient(135deg, #10b981, #059669)", 
-                  color: "#fff", 
-                  border: 0, 
-                  padding: "12px 16px", 
-                  borderRadius: "12px", 
-                  fontWeight: 600, 
-                  cursor: "pointer"
-                }}
-              >
-                Send
-              </button>
+              <InputContainer>
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  style={{ 
+                    background: "rgba(255,255,255,.1)", 
+                    border: "1px solid rgba(255,255,255,.2)", 
+                    color: "#fff", 
+                    padding: "10px 12px", 
+                    borderRadius: "12px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <Smile size={16} />
+                </button>
+                <Input
+                  name="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Share your thoughts, memes, or predictions..."
+                  onKeyPress={(e) => e.key === 'Enter' && handleFormSubmit(e)}
+                />
+                <button
+                  type="button"
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={!recognition}
+                  style={{
+                    background: isListening ? "rgba(239,68,68,.2)" : "rgba(255,255,255,.1)",
+                    border: `1px solid ${isListening ? "#ef4444" : "rgba(255,255,255,.2)"}`,
+                    color: isListening ? "#ef4444" : "#fff",
+                    padding: "10px 12px",
+                    borderRadius: "12px",
+                    cursor: recognition ? "pointer" : "not-allowed",
+                    opacity: recognition ? 1 : 0.5,
+                    transition: "all 0.2s ease"
+                  }}
+                  title={isListening ? "Stop listening" : "Start voice input"}
+                >
+                  {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                </button>
+                <SendButton
+                  type="submit"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Send size={16} />
+                  Send
+                </SendButton>
+              </InputContainer>
             </form>
           </ChatPanel>
         )}

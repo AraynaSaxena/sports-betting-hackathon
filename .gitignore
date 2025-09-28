@@ -46,3 +46,4 @@ ai_backend/venv/
 *.b64
 cv_system/data/models/*.keras
 cv_system/data/raw/*.zip
+cv_system/data/

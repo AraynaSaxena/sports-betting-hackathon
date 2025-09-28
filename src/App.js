@@ -144,7 +144,7 @@ function SportsBettingApp() {
       // Fetch live Eagles player stats
       const response = await fetch('http://localhost:5003/eagles/player_stats');
       const data = await response.json();
-      
+
       if (data.success && data.player) {
         // Use the live Eagles player data
         const eaglesPlayer = {
@@ -160,7 +160,7 @@ function SportsBettingApp() {
           season_stats: data.player.season_stats
         };
         setSelectedPlayer(eaglesPlayer);
-        
+
         const question = await generateAIQuestion(eaglesPlayer);
         setCurrentQuestion(question);
       } else {
@@ -176,7 +176,7 @@ function SportsBettingApp() {
       const question = await generateAIQuestion(player);
       setCurrentQuestion(question);
     }
-    
+
     setIsGeneratingQuestion(false);
   };
 
@@ -188,19 +188,19 @@ function SportsBettingApp() {
     if (amountNum > USER_FINANCIALS.balance * 0.1) {
       return {
         level: 'high',
-        message: '⚠️ This bet is more than 10% of your balance',
+        message: 'This bet is more than 10% of your balance',
         suggestion: 'Consider betting less than $250'
       };
     } else if (totalBetting > USER_FINANCIALS.balance * 0.2) {
       return {
         level: 'medium',
-        message: '🔶 You\'ve spent 20% of your balance on betting this month',
+        message: 'You\'ve spent 20% of your balance on betting this month',
         suggestion: 'Consider reducing bet sizes'
       };
     } else if (amountNum > 0) {
       return {
         level: 'safe',
-        message: '✅ This is a safe bet amount',
+        message: 'This is a safe bet amount',
         suggestion: 'Good job betting responsibly!'
       };
     }
@@ -251,7 +251,11 @@ function SportsBettingApp() {
     <div className="app">
       {/* Header */}
       <header className="header">
-        <h1>🏈 SportsBet AI</h1>
+        <div className="logo-container">
+          <img src="/logo.jpg" alt="App Logo" className="app-logo" />
+          <span className="app-name">JackSport</span>
+        </div>
+
         <div className="header-controls">
           <button
             className={`ai-mode-toggle ${useAIDetection ? 'active' : ''}`}
@@ -259,19 +263,6 @@ function SportsBettingApp() {
           >
             <Eye size={16} />
             {useAIDetection ? 'AI MODE' : 'DEMO MODE'}
-          </button>
-          <button
-            className={`cv-toggle ${cvEnabled ? 'active' : ''}`}
-            onClick={() => setCvEnabled(!cvEnabled)}
-          >
-            <Eye size={16} />
-            {cvEnabled ? 'CV ON' : 'CV OFF'}
-          </button>
-          <button
-            className="info-btn"
-            onClick={() => alert('SportsBet AI - Interactive Sports Betting\n\n• AI-powered question generation\n• Financial responsibility checks\n• Computer vision player detection\n• Real-time betting interface\n\nToggle between DEMO MODE (hardcoded players) and AI MODE (real detection)')}
-          >
-            ℹ️ Info
           </button>
         </div>
       </header>
@@ -298,39 +289,16 @@ function SportsBettingApp() {
             </div>
           </div>
           <div className="cv-description">
-            🔍 Analyzing jersey colors and player movement in real-time
+            Analyzing jersey colors and player movement in real-time
           </div>
         </div>
       )}
 
       {/* Real-Time AI Video Player with Jersey Number Detection */}
       <div className="video-container">
-        <RealTimeVideoPlayer 
+        <RealTimeVideoPlayer
           onPlayerClick={handlePlayerClick}
         />
-      </div>
-
-      {/* Features Panel */}
-      <div className="features-panel">
-        <h3>🚀 Live Demo Features</h3>
-        <div className="features-grid">
-          <div className="feature">
-            <TrendingUp size={24} />
-            <span>AI Question Generation</span>
-          </div>
-          <div className="feature">
-            <DollarSign size={24} />
-            <span>Financial Responsibility</span>
-          </div>
-          <div className="feature">
-            <Eye size={24} />
-            <span>Computer Vision</span>
-          </div>
-          <div className="feature">
-            <MessageCircle size={24} />
-            <span>Cedar Social</span>
-          </div>
-        </div>
       </div>
 
       {/* Player Stats Modal */}
@@ -347,7 +315,7 @@ function SportsBettingApp() {
 
             <div className="modal-content">
               <div className="stats-section">
-                <h3>📊 Performance Stats</h3>
+                <h3>Performance Stats</h3>
                 <div className="stats-grid">
                   {Object.entries(selectedPlayer.stats).map(([key, value]) => (
                     <div key={key} className="stat-item">
@@ -356,11 +324,11 @@ function SportsBettingApp() {
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Last Game Stats */}
                 {selectedPlayer.last_game && (
                   <div className="last-game-section">
-                    <h4>🏈 Last Game vs {selectedPlayer.last_game.opponent}</h4>
+                    <h4>Last Game vs {selectedPlayer.last_game.opponent}</h4>
                     <div className="last-game-stats">
                       {Object.entries(selectedPlayer.last_game.stats).map(([key, value]) => (
                         <div key={key} className="last-game-stat">
@@ -375,7 +343,7 @@ function SportsBettingApp() {
                 {/* Season Summary */}
                 {selectedPlayer.season_stats && (
                   <div className="season-summary">
-                    <h4>📈 Season Summary</h4>
+                    <h4>Season Summary</h4>
                     <div className="season-info">
                       <span>Games Played: {selectedPlayer.season_stats.games_played}</span>
                       {selectedPlayer.season_stats.team_record && (
@@ -387,15 +355,15 @@ function SportsBettingApp() {
               </div>
 
               <div className="question-section">
-                <h3>🤖 AI-Generated Question</h3>
+                <h3>AI-Generated Question</h3>
                 {isGeneratingQuestion ? (
-                  <div className="generating">🤖 Generating question...</div>
+                  <div className="generating">Generating question...</div>
                 ) : (
                   <div className="question-box">
                     <div className="question-text">{currentQuestion}</div>
                     <div className="odds">
-                      <div className="odd">YES +150</div>
-                      <div className="odd">NO -120</div>
+                      <div className="odd">+150</div>
+                      <div className="odd">-120</div>
                     </div>
                   </div>
                 )}
@@ -412,7 +380,7 @@ function SportsBettingApp() {
                 }}
                 disabled={isGeneratingQuestion}
               >
-                🎯 Place Bet
+                Place Bet
               </button>
             </div>
           </div>
@@ -424,7 +392,7 @@ function SportsBettingApp() {
         <div className="modal-overlay" onClick={() => setShowBettingModal(false)}>
           <div className="modal betting-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>🎯 Place Your Bet</h2>
+              <h2>Place Your Bet</h2>
               <button className="close-btn" onClick={() => setShowBettingModal(false)}>✕</button>
             </div>
 
@@ -441,14 +409,12 @@ function SportsBettingApp() {
                     className={`option ${selectedBet === 'YES' ? 'selected' : ''}`}
                     onClick={() => setSelectedBet('YES')}
                   >
-                    <span>YES</span>
                     <span>+150</span>
                   </button>
                   <button
                     className={`option ${selectedBet === 'NO' ? 'selected' : ''}`}
                     onClick={() => setSelectedBet('NO')}
                   >
-                    <span>NO</span>
                     <span>-120</span>
                   </button>
                 </div>
@@ -504,12 +470,29 @@ function SportsBettingApp() {
         </div>
       )}
 
-      {/* Demo Footer */}
+      {/* Enhanced Footer */}
       <footer className="footer">
         <div className="footer-content">
-          <h3>🚀 HackGT Demo Ready!</h3>
-          <p>✅ AI Question Generation • ✅ Financial Responsibility • ✅ Computer Vision • ✅ Interactive Betting</p>
-          <small>Built in 90 minutes • Ready to scale • All APIs integrated</small>
+          <div className="footer-section">
+            <h3>Advanced Sports Analytics</h3>
+            <p>Powered by AI computer vision and real-time player detection technology for the ultimate betting experience.</p>
+          </div>
+
+          <div className="footer-section">
+            <h4>Responsible Gaming</h4>
+            <p>Please bet responsibly. Set limits and stick to them.</p>
+            <p>If you need help, visit: BeGambleAware.org</p>
+          </div>
+
+          <div className="footer-section">
+            <h4>Technology Stack</h4>
+            <p>React • Python • Computer Vision • Machine Learning</p>
+            <p>Real-time analytics for informed betting decisions.</p>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <p>&copy; 2024 JackSport. Advanced analytics for informed betting decisions.</p>
         </div>
       </footer>
     </div>

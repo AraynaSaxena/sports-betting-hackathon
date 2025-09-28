@@ -73,7 +73,7 @@
   50% { box-shadow: 0 0 25px rgba(231, 76, 60, 0.6); }
 }
 
-.cv-toggle:hover, .info-btn:hover {
+.cv-toggle:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 25px rgba(0, 122, 255, 0.4);
 }
@@ -762,29 +762,72 @@
 
 /* Footer */
 .footer {
-  background: linear-gradient(135deg, #00ff88, #00cc66);
-  padding: 25px;
-  text-align: center;
-  margin-top: 40px;
+  background: linear-gradient(135deg, #1a1a1a, #242424);
+  padding: 50px 30px 30px;
+  margin-top: 60px;
+  border-top: 2px solid #333;
+  position: relative;
 }
 
-.footer-content h3 {
-  margin: 0 0 10px 0;
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00ff88, transparent);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 40px;
+  margin-bottom: 30px;
+}
+
+.footer-section {
+  text-align: left;
+}
+
+.footer-section h3 {
+  color: #00ff88;
   font-size: 22px;
-  font-weight: 800;
-  color: white;
+  font-weight: 700;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.footer-content p {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
+.footer-section h4 {
+  color: #00ff88;
+  font-size: 18px;
   font-weight: 600;
+  margin-bottom: 12px;
 }
 
-.footer-content small {
-  font-size: 14px;
+.footer-section p {
   color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 25px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 20px;
+}
+
+.footer-bottom p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
 }
 
 /* Responsive */
@@ -818,6 +861,19 @@
 
   .cv-panel {
     margin: 20px 15px;
+  }
+
+  .footer {
+    padding: 40px 20px 25px;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .footer-section {
+    text-align: center;
   }
 }
 
@@ -1209,4 +1265,34 @@ input[type="checkbox"] {
     padding: 20px;
     margin: 20px 0;
   }
+}
+
+/* Logo styling - IMPROVED SIZE */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.app-logo {
+  height: 55px;
+  width: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+  transition: all 0.3s ease;
+}
+
+.app-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.3);
+}
+
+.app-name {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00ff88, #0066ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
 }

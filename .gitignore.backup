@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production builds
+/build
+/dist
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large video files (optional - comment out if you want to include video)
+public/game-video.mp4
+public/*.mp4
+
+# Cache
+.cache/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+venv/
+env/
+
+# CV System data and models
+cv_system/data/raw/*.csv
+cv_system/data/raw/*.zip
+cv_system/data/raw/train_player_numbers/
+cv_system/data/models/*.h5
+cv_system/data/models/*.json
+cv_system/data/processed/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# ML/AI
+*.pkl
+*.model
+*.weights
+

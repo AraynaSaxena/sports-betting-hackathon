@@ -39,3 +39,10 @@ EOFai_backend/venv/
 venv/
 *.pyc
 __pycache__/
+venv/
+.venv/
+ai_backend/venv/
+*.pt
+*.b64
+cv_system/data/models/*.keras
+cv_system/data/raw/*.zip

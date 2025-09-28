@@ -1,0 +1,326 @@
+# cv_system/api/main.py - Updated with real ML pipeline
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Dict
+import cv2
+import numpy as np
+import json
+import asyncio
+import base64
+import time
+import random
+
+# Import your complete ML pipeline
+from .ml_pipeline import CompleteCVPipeline
+
+app = FastAPI(title="SportsBet CV API with Real ML")
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize the complete ML pipeline
+print("Initializing ML pipeline...")
+try:
+    ml_pipeline = CompleteCVPipeline()
+    print("✅ ML Pipeline initialized successfully")
+except Exception as e:
+    print(f"❌ ML Pipeline initialization failed: {e}")
+    ml_pipeline = None
+
+# Mock system (kept for fallback)
+class MockCVSystem:
+    def __init__(self):
+        self.frame_count = 0
+        self.mock_players = [
+            {
+                'jersey_number': 12,
+                'team': 'Buccaneers',
+                'position': 'QB',
+                'name': 'Tom Brady',
+                'base_position': {'x': 15, 'y': 25, 'width': 8, 'height': 12}
+            },
+            {
+                'jersey_number': 13,
+                'team': 'Buccaneers',
+                'position': 'WR',
+                'name': 'Mike Evans',
+                'base_position': {'x': 35, 'y': 20, 'width': 8, 'height': 12}
+            }
+        ]
+
+    def detect_players_in_frame(self, frame=None):
+        self.frame_count += 1
+        visible_players = []
+        for player in self.mock_players:
+            if random.random() > 0.2:
+                position = player['base_position'].copy()
+                position['x'] += random.uniform(-2, 2)
+                position['y'] += random.uniform(-1, 1)
+                position['x'] = max(0, min(90, position['x']))
+                position['y'] = max(0, min(80, position['y']))
+
+                detection = {
+                    'jersey_number': player['jersey_number'],
+                    'team': player['team'],
+                    'position': player['position'],
+                    'name': player['name'],
+                    'confidence': round(random.uniform(0.75, 0.95), 3),
+                    'screen_position': position,
+                    'bbox': [
+                        int(position['x'] * 10),
+                        int(position['y'] * 8),
+                        int((position['x'] + position['width']) * 10),
+                        int((position['y'] + position['height']) * 8)
+                    ]
+                }
+                visible_players.append(detection)
+        return visible_players
+
+    def get_stats(self):
+        return {
+            'frames_processed': self.frame_count,
+            'players_detected': len(self.mock_players),
+            'avg_latency': round(random.uniform(15, 45), 1),
+            'fps': round(random.uniform(8, 15), 1),
+            'model_accuracy': 0.87,
+            'detection_confidence': 0.92
+        }
+
+mock_cv_system = MockCVSystem()
+
+# Helper function to convert frame to your format
+def process_ml_detections(detections: List[Dict], frame_shape) -> List[Dict]:
+    """Convert ML pipeline results to your expected format"""
+    processed = []
+
+    # Map of jersey numbers to player info (you can expand this)
+    player_database = {
+        12: {'name': 'Tom Brady', 'team': 'Buccaneers', 'position': 'QB'},
+        13: {'name': 'Mike Evans', 'team': 'Buccaneers', 'position': 'WR'},
+        87: {'name': 'Rob Gronkowski', 'team': 'Buccaneers', 'position': 'TE'},
+        15: {'name': 'Patrick Mahomes', 'team': 'Chiefs', 'position': 'QB'},
+        10: {'name': 'Tyreek Hill', 'team': 'Chiefs', 'position': 'WR'},
+        # Add more players as needed
+    }
+
+    frame_h, frame_w = frame_shape[:2]
+
+    for detection in detections:
+        jersey_num = detection['jersey_number']
+        x, y, w, h = detection['bbox']
+
+        # Convert to percentage positions for your frontend
+        screen_position = {
+            'x': (x / frame_w) * 100,
+            'y': (y / frame_h) * 100,
+            'width': (w / frame_w) * 100,
+            'height': (h / frame_h) * 100
+        }
+
+        # Get player info from database or use defaults
+        player_info = player_database.get(jersey_num, {
+            'name': f'Player #{jersey_num}',
+            'team': 'Unknown',
+            'position': 'Unknown'
+        })
+
+        processed.append({
+            'jersey_number': jersey_num,
+            'name': player_info['name'],
+            'team': player_info['team'],
+            'position': player_info['position'],
+            'confidence': detection['combined_confidence'],
+            'jersey_confidence': detection['jersey_confidence'],
+            'detection_confidence': detection['detection_confidence'],
+            'screen_position': screen_position,
+            'bbox': detection['bbox'],
+            'player_id': detection['player_id']
+        })
+
+    return processed
+
+# WebSocket manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def send_to_client(self, websocket: WebSocket, message: dict):
+        try:
+            await websocket.send_text(json.dumps(message, default=str))
+        except:
+            self.disconnect(websocket)
+
+manager = ConnectionManager()
+
+# Real-time detection endpoint using your ML model
+class FrameRequest(BaseModel):
+    frame_data_url: str
+
+class DetectionResponse(BaseModel):
+    detections: List[Dict]
+    stats: Dict
+    processing_time_ms: float
+    model_used: str
+
+@app.post("/detect/frame", response_model=DetectionResponse)
+async def detect_frame(request: FrameRequest):
+    """Real-time frame detection using your trained ML model"""
+    start_time = time.time()
+
+    try:
+        # Decode the frame
+        if "," in request.frame_data_url:
+            base64_data = request.frame_data_url.split(",")[1]
+        else:
+            base64_data = request.frame_data_url
+
+        img_data = base64.b64decode(base64_data)
+        nparr = np.frombuffer(img_data, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            raise ValueError("Could not decode frame")
+
+        # Use your ML model if available
+        if ml_pipeline is not None:
+            # Real ML detection
+            detections = ml_pipeline.detect_and_classify(frame)
+            processed_detections = process_ml_detections(detections, frame.shape)
+            stats = ml_pipeline.get_performance_stats()
+            model_used = "real_ml_model"
+        else:
+            # Fallback to mock
+            processed_detections = mock_cv_system.detect_players_in_frame(frame)
+            stats = mock_cv_system.get_stats()
+            model_used = "mock_fallback"
+
+        processing_time = (time.time() - start_time) * 1000
+
+        return DetectionResponse(
+            detections=processed_detections,
+            stats=stats,
+            processing_time_ms=processing_time,
+            model_used=model_used
+        )
+
+    except Exception as e:
+        print(f"Detection error: {e}")
+        # Return empty result on error
+        return DetectionResponse(
+            detections=[],
+            stats={"error": str(e)},
+            processing_time_ms=(time.time() - start_time) * 1000,
+            model_used="error"
+        )
+
+# WebSocket endpoint (updated to use real ML)
+@app.websocket("/ws/cv")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+
+    try:
+        await manager.send_to_client(websocket, {
+            'type': 'connection',
+            'status': 'connected',
+            'message': 'Real ML CV system ready',
+            'model_loaded': ml_pipeline is not None,
+            'timestamp': time.time()
+        })
+
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=2.0)
+
+                try:
+                    frame_data = json.loads(data)
+
+                    if frame_data.get('type') == 'frame' and frame_data.get('frame_data_url'):
+                        # Process frame using real ML
+                        detection_result = await detect_frame(FrameRequest(
+                            frame_data_url=frame_data['frame_data_url']
+                        ))
+
+                        response = {
+                            'type': 'detections',
+                            'timestamp': frame_data.get('timestamp', time.time()),
+                            'detections': detection_result.detections,
+                            'stats': detection_result.stats,
+                            'processing_time_ms': detection_result.processing_time_ms,
+                            'model_used': detection_result.model_used,
+                            'frame_id': frame_data.get('frame_id', 0)
+                        }
+
+                        await manager.send_to_client(websocket, response)
+
+                    elif frame_data.get('type') == 'ping':
+                        await manager.send_to_client(websocket, {
+                            'type': 'pong',
+                            'timestamp': time.time()
+                        })
+
+                except json.JSONDecodeError:
+                    await manager.send_to_client(websocket, {
+                        'type': 'error',
+                        'message': 'Invalid JSON format'
+                    })
+
+            except asyncio.TimeoutError:
+                # Send periodic heartbeat
+                if ml_pipeline:
+                    stats = ml_pipeline.get_performance_stats()
+                else:
+                    stats = mock_cv_system.get_stats()
+
+                await manager.send_to_client(websocket, {
+                    'type': 'heartbeat',
+                    'timestamp': time.time(),
+                    'stats': stats
+                })
+
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+# Health check
+@app.get("/health")
+async def health_check():
+    return {
+        'status': 'healthy',
+        'ml_pipeline_loaded': ml_pipeline is not None,
+        'model_path_exists': (ml_pipeline.model_path.exists() if ml_pipeline else False),
+        'yolo_loaded': (ml_pipeline.yolo_model is not None if ml_pipeline else False),
+        'jersey_model_loaded': (ml_pipeline.jersey_model is not None if ml_pipeline else False),
+        'timestamp': time.time()
+    }
+
+# Model performance stats
+@app.get("/ml/stats")
+async def get_ml_stats():
+    if ml_pipeline:
+        return ml_pipeline.get_performance_stats()
+    else:
+        return {"error": "ML pipeline not loaded"}
+
+if __name__ == "__main__":
+    import uvicorn
+    print("Starting SportsBet CV API with Real ML...")
+    print("🤖 Your trained Kaggle model integrated!")
+    print("Access at: http://localhost:8001")
+    uvicorn.run(app, host="0.0.0.0", port=8001)

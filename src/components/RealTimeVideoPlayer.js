@@ -17,6 +17,7 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
   const [detectedPlayers, setDetectedPlayers] = useState([]);
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
   const [isAIActive, setIsAIActive] = useState(true); // Start AI immediately
+  const [displayMode, setDisplayMode] = useState('all'); // 'all' or 'hover'
   const [aiStats, setAiStats] = useState({
     fps: 0,
     detections: 0,
@@ -67,7 +68,13 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
     // DEBUG log
     console.debug('[Overlay] Drawing detections:', detections?.length || 0);
 
-    detections.forEach((detection, index) => {
+    // Filter detections based on display mode
+    const detectionsToShow = displayMode === 'hover' 
+      ? (hoveredPlayer ? [hoveredPlayer] : [])
+      : detections;
+
+    // Draw each detection
+    detectionsToShow.forEach((detection, index) => {
       if (!detection.bbox) return;
 
       const [x1, y1, x2, y2] = detection.bbox;
@@ -81,15 +88,17 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
       const width = displayX2 - displayX1;
       const height = displayY2 - displayY1;
 
-      // Determine colors based on confidence and jersey detection
-      let boxColor = '#00ff00'; // Green for good detection
+      // Dynamic color based on movement intensity
+      let boxColor = '#00ff00'; // Default green
       let textColor = '#ffffff';
       
-      if (detection.confidence < 0.5) {
-        boxColor = '#ffff00'; // Yellow for medium confidence
-      }
-      if (detection.confidence < 0.3) {
-        boxColor = '#ff0000'; // Red for low confidence
+      // Color coding based on movement intensity
+      if (detection.intensity_level === 'red') {
+        boxColor = '#ff0000'; // Red for high intensity (sprinting)
+      } else if (detection.intensity_level === 'yellow') {
+        boxColor = '#ffff00'; // Yellow for medium intensity (jogging)
+      } else {
+        boxColor = '#00ff00'; // Green for low intensity (walking/stationary)
       }
 
       // Draw bounding box
@@ -141,14 +150,14 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
         ctx.fillText(nameText, displayX1 + width/2, displayY2 + 15);
       }
 
-      // Draw confidence score
-      const confidenceText = `${Math.round(detection.confidence * 100)}%`;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(displayX2 - 35, displayY1, 35, 20);
-      ctx.fillStyle = textColor;
-      ctx.font = '10px Arial';
+      // Draw movement confidence score
+      const movementText = `${Math.round((detection.movement_confidence || 0) * 100)}%`;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(displayX2 - 40, displayY1, 40, 20);
+      ctx.fillStyle = boxColor;
+      ctx.font = 'bold 11px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(confidenceText, displayX2 - 17, displayY1 + 13);
+      ctx.fillText(movementText, displayX2 - 20, displayY1 + 14);
     });
   }, [isPlaying, hoveredPlayer]);
 
@@ -428,6 +437,19 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
                  !isPlaying ? 'Paused - Detections Frozen' : 'Processing Video Frames'}
               </div>
             </div>
+          </div>
+
+          {/* Display Mode Toggle */}
+          <div className="display-mode-toggle">
+            <label className="toggle-label">Display:</label>
+            <select 
+              value={displayMode} 
+              onChange={(e) => setDisplayMode(e.target.value)}
+              className="mode-select"
+            >
+              <option value="all">Show All Frames</option>
+              <option value="hover">Show on Hover Only</option>
+            </select>
           </div>
 
           {error && (

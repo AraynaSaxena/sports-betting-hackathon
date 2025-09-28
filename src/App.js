@@ -137,12 +137,46 @@ function SportsBettingApp() {
 
   // Handle player click (works for both hardcoded and AI-detected players)
   const handlePlayerClick = async (player) => {
-    setSelectedPlayer(player);
     setIsGeneratingQuestion(true);
     setShowPlayerModal(true);
 
-    const question = await generateAIQuestion(player);
-    setCurrentQuestion(question);
+    try {
+      // Fetch live Eagles player stats
+      const response = await fetch('http://localhost:5003/eagles/player_stats');
+      const data = await response.json();
+      
+      if (data.success && data.player) {
+        // Use the live Eagles player data
+        const eaglesPlayer = {
+          ...player,
+          name: data.player.name,
+          number: data.player.number,
+          position: data.player.position,
+          team: data.player.team,
+          headshot: data.player.headshot,
+          stats: data.player.stats,
+          data_status: data.player.data_status,
+          last_game: data.player.last_game,
+          season_stats: data.player.season_stats
+        };
+        setSelectedPlayer(eaglesPlayer);
+        
+        const question = await generateAIQuestion(eaglesPlayer);
+        setCurrentQuestion(question);
+      } else {
+        // Fallback to original player data
+        setSelectedPlayer(player);
+        const question = await generateAIQuestion(player);
+        setCurrentQuestion(question);
+      }
+    } catch (error) {
+      console.error('Error fetching Eagles stats:', error);
+      // Fallback to original player data
+      setSelectedPlayer(player);
+      const question = await generateAIQuestion(player);
+      setCurrentQuestion(question);
+    }
+    
     setIsGeneratingQuestion(false);
   };
 
@@ -304,8 +338,10 @@ function SportsBettingApp() {
         <div className="modal-overlay" onClick={() => setShowPlayerModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedPlayer.name}</h2>
-              <span>#{selectedPlayer.number} • {selectedPlayer.position} • {selectedPlayer.team}</span>
+              <div className="player-info">
+                <h2>{selectedPlayer.name}</h2>
+                <span>#{selectedPlayer.number} • {selectedPlayer.position} • {selectedPlayer.team}</span>
+              </div>
               <button className="close-btn" onClick={() => setShowPlayerModal(false)}>✕</button>
             </div>
 
@@ -320,6 +356,34 @@ function SportsBettingApp() {
                     </div>
                   ))}
                 </div>
+                
+                {/* Last Game Stats */}
+                {selectedPlayer.last_game && (
+                  <div className="last-game-section">
+                    <h4>🏈 Last Game vs {selectedPlayer.last_game.opponent}</h4>
+                    <div className="last-game-stats">
+                      {Object.entries(selectedPlayer.last_game.stats).map(([key, value]) => (
+                        <div key={key} className="last-game-stat">
+                          <span className="stat-label">{key}:</span>
+                          <span className="stat-value">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Season Summary */}
+                {selectedPlayer.season_stats && (
+                  <div className="season-summary">
+                    <h4>📈 Season Summary</h4>
+                    <div className="season-info">
+                      <span>Games Played: {selectedPlayer.season_stats.games_played}</span>
+                      {selectedPlayer.season_stats.team_record && (
+                        <span>Team Record: {selectedPlayer.season_stats.team_record}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="question-section">

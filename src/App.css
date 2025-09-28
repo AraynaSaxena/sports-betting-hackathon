@@ -223,6 +223,48 @@
   border-radius: 0 0 15px 15px;
 }
 
+.video-contr.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  border-bottom: 2px solid #3498db;
+}
+
+.player-header-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.player-headshot {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #3498db;
+  object-fit: cover;
+  background: #34495e;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.data-status {
+  font-size: 11px;
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  align-self: flex-start;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .control-btn {
   display: flex;
   align-items: center;
@@ -314,12 +356,11 @@
 }
 
 .modal {
-  background: linear-gradient(135deg, #1a1a1a, #242424);
-  color: #fff;
-  border-radius: 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 15px;
   width: 90%;
-  max-width: 600px;
-  max-height: 85vh;
+  max-width: 500px;
+  max-height: 75vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   border: 1px solid #333;
@@ -328,13 +369,22 @@
 .modal-header {
   background: linear-gradient(135deg, #007AFF, #0052cc);
   color: white;
-  padding: 25px 30px;
-  border-radius: 20px 20px 0 0;
+  padding: 18px 25px;
+  border-radius: 15px 15px 0 0;
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .betting-modal .modal-header {
   background: linear-gradient(135deg, #00ff88, #00cc66);
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .modal-header h2 {
@@ -373,16 +423,16 @@
 }
 
 .modal-content {
-  padding: 30px;
+  padding: 20px 25px;
 }
 
 .stats-section, .question-section {
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .stats-section h3, .question-section h3 {
-  margin: 0 0 15px 0;
-  font-size: 20px;
+  margin: 0 0 12px 0;
+  font-size: 18px;
   font-weight: 700;
   color: #00ff88;
 }
@@ -390,9 +440,9 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
+  gap: 12px;
   background: rgba(0, 0, 0, 0.3);
-  padding: 20px;
+  padding: 15px;
   border-radius: 12px;
 }
 
@@ -414,8 +464,71 @@
 }
 
 .stat-value {
-  font-weight: 700;
-  color: #fff;
+  font-weight: bold;
+  color: #2ecc71;
+}
+
+/* Last Game Stats */
+.last-game-section {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid #34495e;
+}
+
+.last-game-section h4 {
+  color: #3498db;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.last-game-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.last-game-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(52, 73, 94, 0.3);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.last-game-stat .stat-label {
+  color: #bdc3c7;
+}
+
+.last-game-stat .stat-value {
+  color: #f39c12;
+  font-weight: bold;
+}
+
+/* Season Summary */
+.season-summary {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #34495e;
+}
+
+.season-summary h4 {
+  color: #e74c3c;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.season-info {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+}
+
+.season-info span {
+  color: #ecf0f1;
+  background: rgba(231, 76, 60, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .generating {

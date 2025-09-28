@@ -27,7 +27,7 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const AI_BACKEND_URL = 'http://localhost:5001';
+  const AI_BACKEND_URL = 'http://localhost:5003';
 
   // Draw player bounding boxes on overlay canvas
   const drawPlayerOverlays = useCallback((detections) => {
@@ -522,14 +522,16 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
               zIndex: 1000,
               border: '1px solid #00ff00'
             }}>
-              <div><strong>
-                Jersey #{hoveredPlayer.jersey_number || hoveredPlayer.number || 'Unknown'}
-              </strong></div>
+              {(hoveredPlayer.jersey_number || hoveredPlayer.number) && (
+                <div><strong>
+                  Jersey #{hoveredPlayer.jersey_number || hoveredPlayer.number}
+                </strong></div>
+              )}
               {(hoveredPlayer.stats?.name || hoveredPlayer.name) && (
                 <div>{hoveredPlayer.stats?.name || hoveredPlayer.name}</div>
               )}
-              {hoveredPlayer.confidence && (
-                <div>Confidence: {Math.round(hoveredPlayer.confidence * 100)}%</div>
+              {(hoveredPlayer.movement_confidence || hoveredPlayer.confidence) && (
+                <div>Confidence: {Math.round((hoveredPlayer.movement_confidence || hoveredPlayer.confidence) * 100)}%</div>
               )}
               {hoveredPlayer.position && (
                 <div>Position: {hoveredPlayer.position}</div>

@@ -2,10 +2,13 @@ import React, { useState, useRef } from 'react';
 import { Play, Pause, TrendingUp, DollarSign, Eye, MessageCircle } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AIVideoPlayer from './components/AIVideoPlayer';
+import EnhancedVideoPlayer from './components/EnhancedVideoPlayer';
+import RealTimeVideoPlayer from './components/RealTimeVideoPlayer';
 import './App.css';
 
 // Your Gemini API key
-const GEMINI_API_KEY = 'AIzaSyC3r1DQPqNfU28LKvbRr2Grbwf7oAlxrXw';
+const GEMINI_API_KEY = 'AIzaSyBIfH1c83uRwjqjqELDEoeWJ5J2HDjl_IA';
 
 // Player data from your preprocessing
 const PLAYER_POSITIONS = [
@@ -74,6 +77,8 @@ function SportsBettingApp() {
   const [betAmount, setBetAmount] = useState('');
   const [selectedBet, setSelectedBet] = useState(null);
   const [financialWarning, setFinancialWarning] = useState(null);
+  const [aiDetections, setAiDetections] = useState([]);
+  const [useAIDetection, setUseAIDetection] = useState(false);
 
   const videoRef = useRef(null);
 
@@ -119,14 +124,59 @@ function SportsBettingApp() {
     }
   };
 
-  // Handle player click
+  // Handle AI player detection
+  const handleAIPlayerDetection = (detections) => {
+    setAiDetections(detections);
+    // Update CV stats to show AI detection data
+    setCvStats(prev => ({
+      ...prev,
+      players: detections.length,
+      frames: prev.frames + 1
+    }));
+  };
+
+  // Handle player click (works for both hardcoded and AI-detected players)
   const handlePlayerClick = async (player) => {
-    setSelectedPlayer(player);
     setIsGeneratingQuestion(true);
     setShowPlayerModal(true);
 
-    const question = await generateAIQuestion(player);
-    setCurrentQuestion(question);
+    try {
+      // Fetch live Eagles player stats
+      const response = await fetch('http://localhost:5003/eagles/player_stats');
+      const data = await response.json();
+      
+      if (data.success && data.player) {
+        // Use the live Eagles player data
+        const eaglesPlayer = {
+          ...player,
+          name: data.player.name,
+          number: data.player.number,
+          position: data.player.position,
+          team: data.player.team,
+          headshot: data.player.headshot,
+          stats: data.player.stats,
+          data_status: data.player.data_status,
+          last_game: data.player.last_game,
+          season_stats: data.player.season_stats
+        };
+        setSelectedPlayer(eaglesPlayer);
+        
+        const question = await generateAIQuestion(eaglesPlayer);
+        setCurrentQuestion(question);
+      } else {
+        // Fallback to original player data
+        setSelectedPlayer(player);
+        const question = await generateAIQuestion(player);
+        setCurrentQuestion(question);
+      }
+    } catch (error) {
+      console.error('Error fetching Eagles stats:', error);
+      // Fallback to original player data
+      setSelectedPlayer(player);
+      const question = await generateAIQuestion(player);
+      setCurrentQuestion(question);
+    }
+    
     setIsGeneratingQuestion(false);
   };
 
@@ -204,6 +254,13 @@ function SportsBettingApp() {
         <h1>🏈 SportsBet AI</h1>
         <div className="header-controls">
           <button
+            className={`ai-mode-toggle ${useAIDetection ? 'active' : ''}`}
+            onClick={() => setUseAIDetection(!useAIDetection)}
+          >
+            <Eye size={16} />
+            {useAIDetection ? 'AI MODE' : 'DEMO MODE'}
+          </button>
+          <button
             className={`cv-toggle ${cvEnabled ? 'active' : ''}`}
             onClick={() => setCvEnabled(!cvEnabled)}
           >
@@ -212,7 +269,7 @@ function SportsBettingApp() {
           </button>
           <button
             className="info-btn"
-            onClick={() => alert('SportsBet AI - Interactive Sports Betting\n\n• AI-powered question generation\n• Financial responsibility checks\n• Computer vision player detection\n• Real-time betting interface')}
+            onClick={() => alert('SportsBet AI - Interactive Sports Betting\n\n• AI-powered question generation\n• Financial responsibility checks\n• Computer vision player detection\n• Real-time betting interface\n\nToggle between DEMO MODE (hardcoded players) and AI MODE (real detection)')}
           >
             ℹ️ Info
           </button>
@@ -246,70 +303,11 @@ function SportsBettingApp() {
         </div>
       )}
 
-      {/* Video Container */}
+      {/* Real-Time AI Video Player with Jersey Number Detection */}
       <div className="video-container">
-        <div className="video-wrapper" style={{ position: 'relative' }}>
-          <video
-            ref={videoRef}
-            width="100%"
-            height="400px"
-            controls
-            style={{ borderRadius: '10px', backgroundColor: '#000' }}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          >
-            <source src="/game-video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-
-          {/* Player overlays positioned over the video */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            pointerEvents: 'none' // Allow video controls to work
-          }}>
-            {PLAYER_POSITIONS.map(player => (
-              <button
-                key={player.id}
-                className="player-overlay"
-                style={{
-                  position: 'absolute',
-                  left: `${player.screenPosition.x}%`,
-                  top: `${player.screenPosition.y}%`,
-                  width: `${player.screenPosition.width}%`,
-                  height: `${player.screenPosition.height}%`,
-                  backgroundColor: player.color + '40',
-                  borderColor: player.color,
-                  pointerEvents: 'auto', // Re-enable clicks for player buttons
-                  zIndex: 10
-                }}
-                onClick={() => handlePlayerClick(player)}
-              >
-                <div className="player-label">
-                  <div>#{player.number}</div>
-                  <div>{player.name.split(' ')[1]}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Video Controls */}
-        <div className="video-controls">
-          <button
-            className="control-btn"
-            onClick={() => setIsPlaying(!isPlaying)}
-          >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-          <span className="video-status">
-            {PLAYER_POSITIONS.length} players detected • AI Ready ✅
-          </span>
-        </div>
+        <RealTimeVideoPlayer 
+          onPlayerClick={handlePlayerClick}
+        />
       </div>
 
       {/* Features Panel */}
@@ -340,8 +338,10 @@ function SportsBettingApp() {
         <div className="modal-overlay" onClick={() => setShowPlayerModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedPlayer.name}</h2>
-              <span>#{selectedPlayer.number} • {selectedPlayer.position} • {selectedPlayer.team}</span>
+              <div className="player-info">
+                <h2>{selectedPlayer.name}</h2>
+                <span>#{selectedPlayer.number} • {selectedPlayer.position} • {selectedPlayer.team}</span>
+              </div>
               <button className="close-btn" onClick={() => setShowPlayerModal(false)}>✕</button>
             </div>
 
@@ -356,6 +356,34 @@ function SportsBettingApp() {
                     </div>
                   ))}
                 </div>
+                
+                {/* Last Game Stats */}
+                {selectedPlayer.last_game && (
+                  <div className="last-game-section">
+                    <h4>🏈 Last Game vs {selectedPlayer.last_game.opponent}</h4>
+                    <div className="last-game-stats">
+                      {Object.entries(selectedPlayer.last_game.stats).map(([key, value]) => (
+                        <div key={key} className="last-game-stat">
+                          <span className="stat-label">{key}:</span>
+                          <span className="stat-value">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Season Summary */}
+                {selectedPlayer.season_stats && (
+                  <div className="season-summary">
+                    <h4>📈 Season Summary</h4>
+                    <div className="season-info">
+                      <span>Games Played: {selectedPlayer.season_stats.games_played}</span>
+                      {selectedPlayer.season_stats.team_record && (
+                        <span>Team Record: {selectedPlayer.season_stats.team_record}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="question-section">

@@ -1,7 +1,7 @@
 // src/components/CedarOSAssistant.jsx
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send } from 'lucide-react';
+import { Bot, X, Send, Mic, MicOff } from 'lucide-react';
 import styled from '@emotion/styled';
 
 // Cedar-OS styled components
@@ -67,6 +67,8 @@ const AssistantPanel = styled(motion.div)`
   background-clip: padding-box;
   border-radius: 24px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-shadow: 
     0 25px 80px rgba(0,0,0,.6),
     0 0 0 1px rgba(255,255,255,.1),
@@ -95,6 +97,7 @@ const InputContainer = styled.div`
   padding: 16px 20px;
   border-top: 1px solid rgba(255,255,255,.1);
   background: rgba(0,0,0,.1);
+  flex-shrink: 0;
 `;
 
 const Input = styled.input`
@@ -143,6 +146,62 @@ export default function CedarOSAssistant() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+
+  // Initialize speech recognition
+  React.useEffect(() => {
+    console.log('AI Assistant: Initializing speech recognition...');
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US';
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('AI Assistant voice input received:', transcript);
+        setInput(transcript);
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+      
+      setRecognition(recognitionInstance);
+      console.log('AI Assistant: Speech recognition initialized successfully');
+    } else {
+      console.log('AI Assistant: Speech recognition not supported in this browser');
+    }
+  }, []);
+
+  const startListening = () => {
+    console.log('AI Assistant: Starting voice recognition...');
+    console.log('Recognition available:', !!recognition);
+    console.log('Currently listening:', isListening);
+    if (recognition && !isListening) {
+      setIsListening(true);
+      recognition.start();
+    } else {
+      console.log('AI Assistant: Recognition not available or already listening');
+    }
+  };
+
+  const stopListening = () => {
+    console.log('AI Assistant: Stopping voice recognition...');
+    if (recognition && isListening) {
+      recognition.stop();
+      setIsListening(false);
+    }
+  };
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isLoading) return;
@@ -175,23 +234,28 @@ export default function CedarOSAssistant() {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are a Cedar-OS powered AI sports betting assistant. You have access to real-time data and can provide intelligent analysis using the Cedar-OS framework.
+              text: `You are a friendly, conversational AI sports assistant. Be natural and engaging, not robotic.
 
-Your capabilities:
-- Analyze betting strategies and odds using Cedar-OS data integration
-- Provide player statistics and performance insights  
-- Offer game predictions based on current data
-- Promote responsible betting practices
-- Share sports knowledge and betting education
-- Use Cedar-OS agentic state management for context
+CONVERSATION STYLE:
+- If someone greets you, greet them back naturally
+- Only answer what they actually ask - don't give extra information unless requested
+- Be conversational and personable, like talking to a knowledgeable friend
+- Assume the person may not know much about football/NFL, so provide helpful context when relevant
+- Match their energy level and tone
 
-Guidelines:
-- Always encourage responsible betting
-- Provide accurate, data-driven insights
-- Keep responses concise and actionable (under 200 words)
-- Be encouraging but realistic about risks
-- Focus on education and informed decision-making
-- Leverage Cedar-OS AI-native application features
+WHEN DISCUSSING SPORTS/BETTING:
+- Explain football concepts in simple terms (e.g., "A touchdown is worth 6 points")
+- Provide context about teams, players, or rules when relevant
+- Give practical betting advice with explanations
+- Always promote responsible betting practices
+- Keep responses helpful but concise (under 200 words)
+
+GENERAL APPROACH:
+- Be warm and encouraging
+- Ask follow-up questions to show interest
+- Use appropriate emojis to match their energy
+- Focus on being helpful rather than showing off knowledge
+- Respond naturally to any topic, not just sports
 
 User question: ${userInput}`
             }]
@@ -304,9 +368,10 @@ User question: ${userInput}`
             {/* Messages */}
             <div style={{ 
               padding: "16px 20px", 
-              maxHeight: "50vh", 
+              flex: 1,
               overflow: "auto",
-              background: "linear-gradient(180deg, rgba(0,0,0,.1), transparent)"
+              background: "linear-gradient(180deg, rgba(0,0,0,.1), transparent)",
+              minHeight: 0
             }}>
               {messages.map((msg, index) => (
                 <MessageItem 
@@ -364,6 +429,30 @@ User question: ${userInput}`
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 disabled={isLoading}
               />
+              <button
+                type="button"
+                onClick={isListening ? stopListening : startListening}
+                disabled={isLoading}
+                style={{
+                  background: isListening ? "rgba(239,68,68,.2)" : "rgba(34,197,94,.2)",
+                  border: `1px solid ${isListening ? "#ef4444" : "#22c55e"}`,
+                  color: isListening ? "#ef4444" : "#22c55e",
+                  padding: "10px 12px",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  opacity: 1,
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "40px",
+                  minHeight: "40px",
+                  marginRight: "8px"
+                }}
+                title={isListening ? "Stop listening" : "Start voice input"}
+              >
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
               <SendButton
                 onClick={sendMessage}
                 disabled={isLoading}

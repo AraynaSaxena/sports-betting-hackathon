@@ -34,7 +34,8 @@ class PlayerDetector:
         
         # Jersey number detection parameters
         self.jersey_roi_expansion = 0.3  # Expand bounding box by 30% to find jersey
-        self.confidence_threshold = 0.5
+        # Very low threshold to catch all possible persons
+        self.confidence_threshold = 0.1
         self.nms_threshold = 0.4
         
         # Team color detection (simplified)
@@ -55,26 +56,37 @@ class PlayerDetector:
         detections = []
         
         if self.yolo_model is None:
+            print("[Detector] YOLO model not loaded")
             return []
         
         try:
-            # Step 1: Detect persons using YOLO
-            results = self.yolo_model(frame, conf=self.confidence_threshold)
+            # Step 1: Preprocess frame for better detection
+            processed_frame = self._preprocess_frame_for_yolo(frame)
+            
+            # Step 2: Detect persons using YOLO (restrict to person class 0)
+            results = self.yolo_model(processed_frame, conf=self.confidence_threshold, classes=[0])
+            
+            # Calculate scale factor if frame was resized
+            scale_x = frame.shape[1] / processed_frame.shape[1]
+            scale_y = frame.shape[0] / processed_frame.shape[0]
             
             # Step 2: Process each detected person
+            person_candidates = 0
             for result in results:
                 boxes = result.boxes
                 if boxes is not None:
                     for box in boxes:
                         # Only process 'person' class (class 0 in COCO)
                         if int(box.cls[0]) == 0:  # person class
+                            person_candidates += 1
                             confidence = float(box.conf[0])
-                            
                             if confidence > self.confidence_threshold:
-                                # Get bounding box coordinates
+                                # Get bounding box coordinates and scale back to original frame
                                 x1, y1, x2, y2 = map(int, box.xyxy[0])
+                                x1, x2 = int(x1 * scale_x), int(x2 * scale_x)
+                                y1, y2 = int(y1 * scale_y), int(y2 * scale_y)
                                 
-                                # Extract player region
+                                # Extract player region from original frame
                                 player_region = frame[y1:y2, x1:x2]
                                 
                                 # Detect jersey number
@@ -101,8 +113,17 @@ class PlayerDetector:
                                 
                                 detections.append(detection)
             
+            # Debug: log candidate and pre/post processing counts
+            print(f"[Detector] YOLO person candidates: {person_candidates}, kept before post: {len(detections)}")
+
             # Step 3: Post-process detections
             detections = self._post_process_detections(detections)
+
+            print(f"[Detector] Final detections after post-process: {len(detections)}")
+            
+            # No fallback - return actual YOLO detections only
+            if len(detections) == 0:
+                print("[Detector] No YOLO detections found")
             
             processing_time = time.time() - start_time
             
@@ -243,7 +264,7 @@ class PlayerDetector:
             return detections
         
         # Remove detections that are too small (likely false positives)
-        min_area = 1000  # Minimum pixel area
+        min_area = 100  # Very low minimum area to catch small players
         filtered_detections = [d for d in detections if d['area'] > min_area]
         
         # Sort by confidence
@@ -328,3 +349,103 @@ class PlayerDetector:
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
         
         return result_frame
+    
+    def _get_fallback_detections(self, frame: np.ndarray) -> List[Dict]:
+        """
+        Return hardcoded demo player detections when YOLO fails
+        """
+        height, width = frame.shape[:2]
+        processing_time = 0.05  # Simulate fast processing
+        timestamp = time.time()
+        
+        # Demo players positioned across the frame
+        demo_players = [
+            {
+                'bbox': [int(width * 0.15), int(height * 0.25), int(width * 0.25), int(height * 0.75)],
+                'confidence': 0.95,
+                'jersey_number': 12,
+                'team_color': 'red',
+                'center': [int(width * 0.20), int(height * 0.50)],
+                'area': int(width * 0.10) * int(height * 0.50),
+                'screen_position': {
+                    'x': 20.0,
+                    'y': 50.0,
+                    'width': 10.0,
+                    'height': 50.0
+                },
+                'processing_time': processing_time,
+                'timestamp': timestamp
+            },
+            {
+                'bbox': [int(width * 0.35), int(height * 0.20), int(width * 0.45), int(height * 0.70)],
+                'confidence': 0.88,
+                'jersey_number': 87,
+                'team_color': 'blue',
+                'center': [int(width * 0.40), int(height * 0.45)],
+                'area': int(width * 0.10) * int(height * 0.50),
+                'screen_position': {
+                    'x': 40.0,
+                    'y': 45.0,
+                    'width': 10.0,
+                    'height': 50.0
+                },
+                'processing_time': processing_time,
+                'timestamp': timestamp
+            },
+            {
+                'bbox': [int(width * 0.65), int(height * 0.30), int(width * 0.75), int(height * 0.80)],
+                'confidence': 0.92,
+                'jersey_number': 13,
+                'team_color': 'green',
+                'center': [int(width * 0.70), int(height * 0.55)],
+                'area': int(width * 0.10) * int(height * 0.50),
+                'screen_position': {
+                    'x': 70.0,
+                    'y': 55.0,
+                    'width': 10.0,
+                    'height': 50.0
+                },
+                'processing_time': processing_time,
+                'timestamp': timestamp
+            }
+        ]
+        
+        print(f"[Detector] Returning {len(demo_players)} fallback demo players")
+        return demo_players
+    
+    def _preprocess_frame_for_yolo(self, frame: np.ndarray) -> np.ndarray:
+        """
+        Preprocess frame to improve YOLO detection
+        """
+        try:
+            height, width = frame.shape[:2]
+            
+            # If frame is too small, upscale it for better detection
+            min_size = 640
+            if width < min_size or height < min_size:
+                if width < height:
+                    new_width = min_size
+                    new_height = int(height * (min_size / width))
+                else:
+                    new_height = min_size
+                    new_width = int(width * (min_size / height))
+                
+                frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+                print(f"[Detector] Upscaled frame from {width}x{height} to {new_width}x{new_height}")
+            
+            # Enhance contrast and brightness for better detection
+            lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+            l, a, b = cv2.split(lab)
+            
+            # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            l = clahe.apply(l)
+            
+            enhanced_frame = cv2.merge([l, a, b])
+            enhanced_frame = cv2.cvtColor(enhanced_frame, cv2.COLOR_LAB2BGR)
+            
+            return enhanced_frame
+            
+        except Exception as e:
+            print(f"Error in frame preprocessing: {e}")
+            return frame

@@ -7,6 +7,11 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
   const canvasRef = useRef(null);
   const overlayCanvasRef = useRef(null);
   const processingIntervalRef = useRef(null);
+  // Freeze overlay geometry when paused
+  const frozenRectRef = useRef(null);
+  const frozenScaleRef = useRef({ x: 1, y: 1 });
+  // Abort in-flight frame requests when pausing
+  const requestAbortRef = useRef(null);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [detectedPlayers, setDetectedPlayers] = useState([]);
@@ -21,103 +26,46 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const AI_BACKEND_URL = 'http://localhost:5002';
-
-  // Process video frame to detect players and jersey numbers
-  const processVideoFrame = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || !isAIActive || isProcessing) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-
-    // Skip if video not ready
-    if (video.readyState < 2) return;
-
-    try {
-      setIsProcessing(true);
-      
-      // Set canvas size to match video
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      // Draw current video frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // Convert to base64
-      const frameData = canvas.toDataURL('image/jpeg', 0.7);
-      
-      const startTime = Date.now();
-
-      // Send to AI backend
-      const response = await fetch(`${AI_BACKEND_URL}/process_video_frame`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          frame: frameData,
-          timestamp: Date.now()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Backend error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        const processingTime = Date.now() - startTime;
-        
-        // Update detections
-        setDetectedPlayers(result.detections || []);
-        
-        // Update stats
-        const avgConfidence = result.detections.length > 0 
-          ? result.detections.reduce((sum, d) => sum + (d.confidence || 0), 0) / result.detections.length
-          : 0;
-
-        setAiStats({
-          fps: Math.round(1000 / Math.max(processingTime, 100)),
-          detections: result.detections.length,
-          processingTime: processingTime,
-          confidence: Math.round(avgConfidence * 100)
-        });
-
-        // Draw bounding boxes on overlay canvas
-        drawPlayerOverlays(result.detections);
-        
-        setError(null);
-      } else {
-        setError(result.error || 'Processing failed');
-      }
-    } catch (err) {
-      console.error('Frame processing error:', err);
-      setError(err.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [isAIActive, isProcessing]);
+  const AI_BACKEND_URL = 'http://localhost:5001';
 
   // Draw player bounding boxes on overlay canvas
-  const drawPlayerOverlays = (detections) => {
+  const drawPlayerOverlays = useCallback((detections) => {
     const overlayCanvas = overlayCanvasRef.current;
     const video = videoRef.current;
     
     if (!overlayCanvas || !video) return;
 
     const ctx = overlayCanvas.getContext('2d');
-    const rect = video.getBoundingClientRect();
+    // When paused, use frozen geometry to avoid jitter from layout changes
+    let rect;
+    if (!isPlaying && frozenRectRef.current) {
+      rect = frozenRectRef.current;
+    } else {
+      rect = video.getBoundingClientRect();
+      // Update frozen values while playing
+      frozenRectRef.current = rect;
+    }
     
-    // Set canvas size to match video display size
-    overlayCanvas.width = rect.width;
-    overlayCanvas.height = rect.height;
+    // Set canvas size to match video display size (use integers to avoid subpixel jitter)
+    overlayCanvas.width = Math.round(rect.width);
+    overlayCanvas.height = Math.round(rect.height);
     
     // Clear previous drawings
     ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-    // Calculate scale factors
-    const scaleX = rect.width / video.videoWidth;
-    const scaleY = rect.height / video.videoHeight;
+    // Calculate scale factors (frozen when paused)
+    let scaleX, scaleY;
+    if (!isPlaying && frozenScaleRef.current) {
+      scaleX = frozenScaleRef.current.x;
+      scaleY = frozenScaleRef.current.y;
+    } else {
+      scaleX = rect.width / video.videoWidth;
+      scaleY = rect.height / video.videoHeight;
+      frozenScaleRef.current = { x: scaleX, y: scaleY };
+    }
+
+    // DEBUG log
+    console.debug('[Overlay] Drawing detections:', detections?.length || 0);
 
     detections.forEach((detection, index) => {
       if (!detection.bbox) return;
@@ -202,7 +150,107 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
       ctx.textAlign = 'center';
       ctx.fillText(confidenceText, displayX2 - 17, displayY1 + 13);
     });
-  };
+  }, [isPlaying, hoveredPlayer]);
+
+  // Process video frame to detect players and jersey numbers
+  const processVideoFrame = useCallback(async () => {
+    if (!videoRef.current || !canvasRef.current || !isAIActive || !isPlaying || isProcessing) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    // Skip if video not ready or paused
+    if (video.readyState < 2 || video.paused) return;
+
+    try {
+      setIsProcessing(true);
+      
+      // Set canvas size to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Draw current video frame
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert to base64
+      const frameData = canvas.toDataURL('image/jpeg', 0.7);
+      
+      const startTime = Date.now();
+      
+      console.log('🚀 [Frontend] ===== SENDING FRAME =====');
+      console.log('🚀 [Frontend] Time:', new Date().toISOString());
+      console.log('🚀 [Frontend] Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+      console.log('🚀 [Frontend] Canvas dimensions:', canvas.width, 'x', canvas.height);
+
+      // Send to AI backend (with abort support)
+      if (requestAbortRef.current) {
+        // If a previous request exists, abort it before starting a new one
+        requestAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      requestAbortRef.current = controller;
+      const response = await fetch(`${AI_BACKEND_URL}/process_video_frame`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          frame: frameData,
+          timestamp: Date.now()
+        }),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('📥 [Frontend] Backend response:', result);
+
+      // If video got paused while awaiting response, abort applying updates
+      if (video.paused) {
+        console.log('⏸️ [Frontend] Video paused, aborting update');
+        return;
+      }
+
+      if (result.success) {
+        console.log('✅ [Frontend] Processing successful, detections:', result.detections?.length || 0);
+        const processingTime = Date.now() - startTime;
+        
+        // Update detections
+        setDetectedPlayers(result.detections || []);
+        
+        // Update stats
+        const avgConfidence = result.detections.length > 0 
+          ? result.detections.reduce((sum, d) => sum + (d.confidence || 0), 0) / result.detections.length
+          : 0;
+
+        setAiStats({
+          fps: Math.round(1000 / Math.max(processingTime, 100)),
+          detections: result.detections.length,
+          processingTime: processingTime,
+          confidence: Math.round(avgConfidence * 100)
+        });
+
+        // Draw bounding boxes on overlay canvas
+        drawPlayerOverlays(result.detections);
+        
+        setError(null);
+      } else {
+        setError(result.error || 'Processing failed');
+      }
+    } catch (err) {
+      console.error('Frame processing error:', err);
+      setError(err.message);
+    } finally {
+      // Clear abort controller when done
+      if (requestAbortRef.current) {
+        requestAbortRef.current = null;
+      }
+      setIsProcessing(false);
+    }
+  }, [isAIActive, isProcessing, isPlaying, drawPlayerOverlays]);
+
 
   // Handle mouse move over video to detect hover (YOLO detections only)
   const handleMouseMove = (e) => {
@@ -252,43 +300,6 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
     }
   };
 
-  // Toggle AI processing
-  const toggleAI = async () => {
-    if (!isAIActive) {
-      try {
-        // Test backend connection
-        const response = await fetch(`${AI_BACKEND_URL}/health`);
-        if (!response.ok) {
-          throw new Error('Backend not responding');
-        }
-
-        setIsAIActive(true);
-        setError(null);
-        
-        // Start processing frames every 300ms (about 3 FPS for performance)
-        processingIntervalRef.current = setInterval(processVideoFrame, 300);
-        
-      } catch (err) {
-        setError('AI Backend not available. Please run: cd ai_backend && python3 app.py');
-        console.error('Backend connection failed:', err);
-      }
-    } else {
-      setIsAIActive(false);
-      setDetectedPlayers([]);
-      
-      if (processingIntervalRef.current) {
-        clearInterval(processingIntervalRef.current);
-        processingIntervalRef.current = null;
-      }
-
-      // Clear overlay canvas
-      const overlayCanvas = overlayCanvasRef.current;
-      if (overlayCanvas) {
-        const ctx = overlayCanvas.getContext('2d');
-        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-      }
-    }
-  };
 
   // Update overlay canvas when video size changes
   useEffect(() => {
@@ -300,7 +311,12 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [detectedPlayers]);
+  }, [detectedPlayers, drawPlayerOverlays]);
+
+  // Redraw overlays whenever detections or play state change
+  useEffect(() => {
+    drawPlayerOverlays(detectedPlayers);
+  }, [detectedPlayers, isPlaying, drawPlayerOverlays]);
 
   // Start AI processing automatically when component mounts
   useEffect(() => {
@@ -309,14 +325,28 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
         const response = await fetch(`${AI_BACKEND_URL}/health`);
         if (response.ok) {
           setError(null);
-          // Start processing frames every 200ms (5 FPS)
-          processingIntervalRef.current = setInterval(processVideoFrame, 200);
-          console.log('🤖 YOLO AI detection started automatically');
+          
+          // FORCE TEST: Try processing a frame immediately
+          console.log('🧪 [Frontend] FORCE TESTING - calling processVideoFrame once');
+          try {
+            await processVideoFrame();
+          } catch (testErr) {
+            console.error('❌ [Frontend] Force test failed:', testErr);
+          }
+          
+          // Start processing frames every 200ms (5 FPS) ONLY if video is playing
+          const video = videoRef.current;
+          if (video && !video.paused && !processingIntervalRef.current) {
+            processingIntervalRef.current = setInterval(processVideoFrame, 200);
+            console.log('🤖 YOLO AI detection started automatically');
+          } else {
+            console.log('🤖 Backend healthy. Waiting for video play to start AI processing...');
+          }
         } else {
           setError('AI Backend not responding');
         }
       } catch (err) {
-        setError('AI Backend not available. Please run: cd ai_backend && python3 simple_app.py');
+        setError('AI Backend not available. Please run: cd ai_backend && python3 app.py');
         console.error('Backend connection failed:', err);
       }
     };
@@ -331,6 +361,59 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
     };
   }, [processVideoFrame]);
 
+  // Ensure interval tracks play/AI state reactively
+  useEffect(() => {
+    const shouldRun = isAIActive && isPlaying && !processingIntervalRef.current;
+    if (shouldRun) {
+      processingIntervalRef.current = setInterval(processVideoFrame, 200);
+      console.log('▶️ Processing interval started (reactive)');
+    }
+    if ((!isAIActive || !isPlaying) && processingIntervalRef.current) {
+      clearInterval(processingIntervalRef.current);
+      processingIntervalRef.current = null;
+      console.log('⏹️ Processing interval stopped (reactive)');
+    }
+    return () => {};
+  }, [isAIActive, isPlaying, processVideoFrame]);
+
+  // Handle video play/pause events to control AI processing
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      // Resume AI processing when video plays
+      if (isAIActive && !processingIntervalRef.current) {
+        processingIntervalRef.current = setInterval(processVideoFrame, 200);
+        console.log('🤖 AI processing resumed');
+      }
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      // Keep the last detections visible when paused, but stop processing new frames
+      if (processingIntervalRef.current) {
+        clearInterval(processingIntervalRef.current);
+        processingIntervalRef.current = null;
+      }
+      // Abort any in-flight request so late responses don't update overlays
+      if (requestAbortRef.current) {
+        try { requestAbortRef.current.abort(); } catch (_) {}
+        requestAbortRef.current = null;
+      }
+      console.log('⏸️ AI processing paused with video');
+    };
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+
+    return () => {
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+    };
+  }, [isAIActive, processVideoFrame]);
+
   return (
     <div className="realtime-video-player">
       {/* AI Control Panel */}
@@ -341,7 +424,8 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
             <div>
               <div className="status-title">YOLO AI Detection</div>
               <div className="status-subtitle">
-                {error ? 'Backend Offline' : 'Processing Video Frames'}
+                {error ? 'Backend Offline' : 
+                 !isPlaying ? 'Paused - Detections Frozen' : 'Processing Video Frames'}
               </div>
             </div>
           </div>
@@ -387,9 +471,6 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
             ref={videoRef}
             width="100%"
             height="400px"
-            controls
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
           >
             <source src="/game-video.mp4" type="video/mp4" />
             Your browser does not support the video tag.
@@ -459,7 +540,8 @@ const RealTimeVideoPlayer = ({ onPlayerClick }) => {
 
         <div className="status-center">
           <span>
-            🤖 YOLO AI Detection • {detectedPlayers.length} players detected • Processing video frames
+            🤖 YOLO AI Detection • {detectedPlayers.length} players detected • 
+            {!isPlaying ? 'Paused - Detections frozen' : 'Processing video frames'}
           </span>
         </div>
 

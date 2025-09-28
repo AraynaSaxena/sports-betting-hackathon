@@ -28,6 +28,19 @@ def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy", "message": "AI Backend is running"})
 
+@app.route('/test_detections', methods=['GET'])
+def test_detections():
+    """Test endpoint to verify fallback detections work"""
+    import numpy as np
+    # Create a dummy frame
+    dummy_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    detections = detector.detect_players_and_numbers(dummy_frame)
+    return jsonify({
+        "success": True,
+        "detections": detections,
+        "count": len(detections)
+    })
+
 @app.route('/detect_players', methods=['POST'])
 def detect_players():
     """Detect players in a single frame"""
@@ -69,16 +82,22 @@ def detect_players():
 @app.route('/process_video_frame', methods=['POST'])
 def process_video_frame():
     """Process a video frame and return player detections with bounding boxes"""
+    print(f"[API] ===== FRAME PROCESSING REQUEST =====")
+    print(f"[API] Timestamp: {time.time()}")
     try:
         data = request.json
+        print(f"[API] Request data keys: {list(data.keys()) if data else 'None'}")
         
         # Decode frame
         image_data = base64.b64decode(data['frame'].split(',')[1])
         image = Image.open(io.BytesIO(image_data))
         frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        print(f"[API] Frame shape: {frame.shape}")
         
         # Process frame
+        print(f"[API] Calling detector...")
         detections = detector.detect_players_and_numbers(frame)
+        print(f"[API] Detector returned {len(detections)} detections")
         
         # Add stats and enhanced info
         enhanced_detections = []
@@ -97,12 +116,22 @@ def process_video_frame():
         global current_detections
         current_detections = enhanced_detections
         
-        return jsonify({
+        # Determine processing_time safely (use first detection if present)
+        processing_time = 0
+        if enhanced_detections:
+            pt = enhanced_detections[0].get('processing_time')
+            if isinstance(pt, (int, float)):
+                processing_time = pt
+
+        result = {
             "success": True,
             "detections": enhanced_detections,
             "timestamp": time.time(),
-            "processing_time": detection.get('processing_time', 0)
-        })
+            "processing_time": processing_time
+        }
+        print(f"[API] Returning {len(enhanced_detections)} enhanced detections")
+        print(f"[API] ===== END FRAME PROCESSING =====")
+        return jsonify(result)
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -164,14 +193,14 @@ def start_websocket_server():
     loop.run_forever()
 
 if __name__ == '__main__':
-    # Start WebSocket server in background
-    websocket_thread = Thread(target=start_websocket_server, daemon=True)
-    websocket_thread.start()
+    # Temporarily disable WebSocket server to avoid port conflicts
+    # websocket_thread = Thread(target=start_websocket_server, daemon=True)
+    # websocket_thread.start()
     
     print("🚀 AI Backend Starting...")
     print("📊 Player Detection: Ready")
     print("🔢 Jersey OCR: Ready")
     print("📈 Stats Service: Ready")
-    print("🌐 WebSocket Server: Running on ws://localhost:8765")
+    print("🌐 WebSocket Server: Disabled (avoiding port conflict)")
     
     app.run(host='0.0.0.0', port=5001, debug=True)

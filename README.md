@@ -75,11 +75,31 @@ JackSport acts as an **interactive intelligence layer** on top of live sports co
 
 ## Screenshots & Demo
 
-![Logo](docs/logo.jpg)
-![Player Overlay](docs/gallery.jpg)
-![Analytics Dashboard](docs/chat.png)
-![Other Features](docs/analytics.png)
+### Project Logo
+<p align="center">
+  <img src="docs/logo.jpg" width="220"/>
+</p>
 
+---
+
+### Live Player Overlay & Interaction
+<p align="center">
+  <img src="docs/gallery.jpg" width="650"/>
+</p>
+
+---
+
+### Social Chat & Watch Party
+<p align="center">
+  <img src="docs/chat.png" width="600"/>
+</p>
+
+---
+
+### Analytics & Insights Dashboard
+<p align="center">
+  <img src="docs/analytics.png" width="600"/>
+</p>
 
 
 ---
